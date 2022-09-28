@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>252</width>
+    <height>596</height>
+   </rect>
+  </property>
+  <layout class="QHBoxLayout" name="MainLayout">
+   <item>
+    <widget class="QTabWidget" name="tabWidget">
+     <property name="currentIndex">
+      <number>1</number>
+     </property>
+     <widget class="QWidget" name="tab_data">
+      <attribute name="title">
+       <string>Data</string>
+      </attribute>
+      <layout class="QFormLayout" name="lay_tab_data">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>node_1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QLineEdit" name="node_1">
+         <property name="text">
+          <string>asdf</string>
+         </property>
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="value" stdset="0">
+          <string>235</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>custom_elev1</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QComboBox" name="comboBox">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+         <property name="currentIndex">
+          <number>2</number>
+         </property>
+         <item>
+          <property name="text">
+           <string>test 1</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>nuyasu</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>neee</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>asdf</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>code</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QSpinBox" name="spinBox">
+         <property name="minimum">
+          <number>-5</number>
+         </property>
+         <property name="maximum">
+          <number>10</number>
+         </property>
+         <property name="value">
+          <number>2</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>builtdate</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QDateTimeEdit" name="builtdate">
+         <property name="readOnly">
+          <bool>true</bool>
+         </property>
+         <property name="dateTime">
+          <datetime>
+           <hour>6</hour>
+           <minute>20</minute>
+           <second>3</second>
+           <year>2022</year>
+           <month>4</month>
+           <day>5</day>
+          </datetime>
+         </property>
+         <property name="time">
+          <time>
+           <hour>6</hour>
+           <minute>20</minute>
+           <second>3</second>
+          </time>
+         </property>
+         <property name="value" stdset="0">
+          <string>2017-12-05T15:15</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>enddate</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QDateEdit" name="dateEdit"/>
+       </item>
+       <item row="5" column="0">
+        <widget class="QLabel" name="label_117">
+         <property name="text">
+          <string>test_time</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="1">
+        <widget class="QTimeEdit" name="timeEdit"/>
+       </item>
+       <item row="6" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>matcat_id</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="0">
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>inverted_slope</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="1">
+        <widget class="QCheckBox" name="inverted_slope">
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+         <property name="tristate">
+          <bool>false</bool>
+         </property>
+         <property name="value" stdset="0">
+          <string>true</string>
+         </property>
+         <property name="readOnly" stdset="0">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QPlainTextEdit" name="plainTextEdit">
+         <property name="plainText">
+          <string>jeje no se que posar :)
+
+(:</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_documents">
+      <attribute name="title">
+       <string>Doc</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_2">
+       <item>
+        <widget class="QPushButton" name="pushButton">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="text">
+          <string>NYE</string>
+         </property>
+         <property name="action">
+          <string>{
+&quot;name&quot;: &quot;featureLink&quot;, 
+&quot;params&quot;: {
+&quot;id&quot;: &quot;100&quot;,
+&quot;tableName&quot;: &quot;v_edit_node&quot;
+}
+}</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_elements">
+      <attribute name="title">
+       <string>Elem</string>
+      </attribute>
+      <layout class="QFormLayout" name="lay_tab_elements"/>
+     </widget>
+     <widget class="QWidget" name="tab_epa">
+      <attribute name="title">
+       <string>EPA inp</string>
+      </attribute>
+      <layout class="QFormLayout" name="lay_tab_epa"/>
+     </widget>
+     <widget class="QWidget" name="tab_event">
+      <attribute name="title">
+       <string>OM</string>
+      </attribute>
+      <layout class="QFormLayout" name="lay_tab_event"/>
+     </widget>
+     <widget class="QWidget" name="tab_plan">
+      <attribute name="title">
+       <string>Cost</string>
+      </attribute>
+      <layout class="QFormLayout" name="lay_tab_plan"/>
+     </widget>
+     <widget class="QWidget" name="tab_relations">
+      <attribute name="title">
+       <string>Relations</string>
+      </attribute>
+      <layout class="QFormLayout" name="lay_tab_relations"/>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
