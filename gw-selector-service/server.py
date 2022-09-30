@@ -43,7 +43,8 @@ getselector_parser.add_argument('theme', required=True)
 getselector_parser.add_argument('epsg', required=True)
 getselector_parser.add_argument('currentTab', required=True)
 getselector_parser.add_argument('selectorType', required=True)
-getselector_parser.add_argument('layers', required=False)
+getselector_parser.add_argument('layers', required=True)
+getselector_parser.add_argument('loadProject', required=True)
 
 setselector_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
 setselector_parser.add_argument('theme', required=True)
@@ -55,7 +56,7 @@ setselector_parser.add_argument('isAlone', required=True)
 setselector_parser.add_argument('disableParent', required=True)
 setselector_parser.add_argument('value', required=True)
 setselector_parser.add_argument('addSchema', required=True)
-setselector_parser.add_argument('layers', required=False)
+setselector_parser.add_argument('layers', required=True)
 
 def get_config() -> RuntimeConfig:
     tenant = tenant_handler.tenant()
@@ -116,7 +117,8 @@ class GwGetSelector(Resource):
                 "filterFields": {},
                 "pageInfo": {},
                 "selectorType": str(args["selectorType"]),
-                "filterText": ""
+                "filterText": "",
+                "loadProject": args["loadProject"]
             }
         }
         request_json = json.dumps(request)
