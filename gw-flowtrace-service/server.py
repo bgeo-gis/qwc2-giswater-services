@@ -40,11 +40,13 @@ upstream_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
 upstream_parser.add_argument('theme', required=True)
 upstream_parser.add_argument('epsg', required=True)
 upstream_parser.add_argument('coords', required=True)
+upstream_parser.add_argument('zoom', required=True)
 
 downstream_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
 downstream_parser.add_argument('theme', required=True)
 downstream_parser.add_argument('epsg', required=True)
 downstream_parser.add_argument('coords', required=True)
+downstream_parser.add_argument('zoom', required=True)
 
 def get_config() -> RuntimeConfig:
     tenant = tenant_handler.tenant()
@@ -78,6 +80,7 @@ class GwUpstream(Resource):
         Returns additional information at clicked map position.
         """
         args = upstream_parser.parse_args()
+        coords = args["coords"].split(',')
 
         config = get_config()
         db = get_db()
@@ -91,19 +94,25 @@ class GwUpstream(Resource):
             }, 
             "form": {}, 
             "feature": {
-                "id": ["33"]
+                
             },
             "data": {
                 "filterFields": {},
-                "pageInfo": {}
+                "pageInfo": {},
+                "coordinates": {
+                    "epsg": int(args['epsg']),
+                    "xcoord": coords[0],
+                    "ycoord": coords[1],
+                    "zoomRatio": float(args['zoom'])
+                }
             }
         }
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_graphanalytics_upstream($${request_json}$$);"
-        print(sql)
+        print(f"SERVER EXECUTION: {sql}\n")
         with db.begin() as conn:
             result: dict = conn.execute(text(sql)).fetchone()[0]
-            print(result)
+            print(f"SERVER RESPONSE: {result}\n\n")
             return handle_db_result(result)
 
 
@@ -117,6 +126,7 @@ class GwDownstream(Resource):
         Returns additional information at clicked map position.
         """
         args = downstream_parser.parse_args()
+        coords = args["coords"].split(',')
 
         config = get_config()
         db = get_db()
@@ -130,19 +140,25 @@ class GwDownstream(Resource):
             }, 
             "form": {}, 
             "feature": {
-                "id": ["33"]
+                
             },
             "data": {
                 "filterFields": {},
-                "pageInfo": {}
+                "pageInfo": {},
+                "coordinates": {
+                    "epsg": int(args['epsg']),
+                    "xcoord": coords[0],
+                    "ycoord": coords[1],
+                    "zoomRatio": float(args['zoom'])
+                }
             }
         }
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_graphanalytics_downstream($${request_json}$$);"
-        print(sql)
+        print(f"SERVER EXECUTION: {sql}\n")
         with db.begin() as conn:
             result: dict = conn.execute(text(sql)).fetchone()[0]
-            print(result)
+            print(f"SERVER RESPONSE: {result}\n\n")
             return handle_db_result(result)
 
 
