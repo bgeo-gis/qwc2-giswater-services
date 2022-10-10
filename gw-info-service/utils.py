@@ -96,7 +96,7 @@ def create_xml_form(db_result: dict) -> str:
 
     return form_xml
 
-def create_xml_form_v2(db_result: dict) -> str:
+def create_xml_form_v2(db_result: dict, simplified: bool=True) -> str:
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'
     form_xml += '<widget class="QWidget" name="Form">'
@@ -109,13 +109,18 @@ def create_xml_form_v2(db_result: dict) -> str:
 
     for tab in db_result['body']['form']['visibleTabs']:
 
+        if (tab["tabName"] != "tab_data"):
+            continue
         form_xml += f'<widget class="QWidget" name="{tab["tabName"]}">'
         form_xml += '<attribute name="title">'
         form_xml += f'<string>{tab["tabLabel"]}</string>'
         form_xml += '</attribute>'
 
         if (tab["tabName"] == "tab_data"):
-            form_xml += data_tab_xml(db_result["body"]["data"]["fields"])
+            if simplified:
+                form_xml += data_tab_onelyt_xml(db_result["body"]["data"]["fields"])
+            else:
+                form_xml += data_tab_xml(db_result["body"]["data"]["fields"])
 
         form_xml += '</widget>\n'
 
@@ -132,8 +137,34 @@ def data_tab_xml(fields):
     lyt_data_1 = ""
     lyt_data_2 = ""
 
+    prev_lyt_name = None
+
     for field in fields:
         if field["layoutname"] == "lyt_data_1" or field["layoutname"] == "lyt_data_2":
+            # if prev_lyt_name is None:
+            #     prev_lyt_name = field['layoutname']
+            # if prev_lyt_name != field['layoutname']:
+            #     # add v_spacer
+            #     xml = ''
+            #     xml += f'<item row="100" column="0">'
+            #     xml += f'<spacer name="verticalSpacer_{field["layoutname"]}">'
+            #     xml += '<property name="orientation">'
+            #     xml += f'<enum>Qt::Vertical</enum>'
+            #     xml += '</property>'
+            #     xml += '<property name="sizeHint" stdset="0">'
+            #     xml += '<size>'
+            #     xml += f'<width>20</width>'
+            #     xml += f'<height>40</height>'
+            #     xml += '</size>'
+            #     xml += '</property>'
+            #     xml += '</spacer>'
+            #     xml += '</item>'
+
+            #     if field["layoutname"] == "lyt_data_1":
+            #         lyt_data_1 += xml
+            #     elif field["layoutname"] == "lyt_data_2":
+            #         lyt_data_2 += xml
+
             row = field["layoutorder"]
             value = ""
             if "value" in field:
@@ -141,7 +172,8 @@ def data_tab_xml(fields):
 
             widget_type = field['widgettype']
             widget_name = field["column_id"]
-
+            # print(f"{field['layoutname']}")
+            # print(f"          {widget_name} -> {row}")
 
             xml = ''
             xml += f'<item row="{row}" column="0">'
@@ -213,6 +245,99 @@ def data_tab_xml(fields):
     form_xml += '  <item>'
     form_xml += '    <layout class="QGridLayout" name="lyt_data_2">'
     form_xml += lyt_data_2
+    form_xml += '    </layout>'
+    form_xml += '  </item>'
+    form_xml += '</layout>'
+
+    return form_xml
+
+
+def data_tab_onelyt_xml(fields):
+
+    lyt_data_1 = ""
+
+    for field in fields:
+        row = field["web_layoutorder"]
+        if row is None:
+            continue
+        value = ""
+        if "value" in field:
+            value = field["value"]
+
+        widget_type = field['widgettype']
+        widget_name = field["column_id"]
+        # print(f"{field['layoutname']}")
+        # print(f"          {widget_name} -> {row}")
+
+        xml = ''
+        xml += f'<item row="{row}" column="0">'
+        xml += '<widget class="QLabel" name="label">'
+        xml += '<property name="text">'
+        xml += f'<string>{field["label"]}</string>'
+        xml += '</property>'
+        xml += '</widget>'
+        xml += '</item>'
+        xml += f'<item row="{row}" column="1">'
+        
+        if widget_type == "check":
+            xml += f'<widget class="QCheckBox" name="{widget_name}">'
+            xml += f'<property name="checked">'
+            xml += f'<boolean>{value}</boolean>'
+            xml += f'</property>'
+        elif widget_type == "datetime":
+            xml += f'<widget class="QDateTimeEdit" name="{widget_name}">'
+            xml += f'<property name="value">'
+            xml += f'<string>{value}</string>'
+            xml += f'</property>'
+        elif widget_type == "combo":
+            xml += f'<widget class="QComboBox" name="{widget_name}">'
+            if field["isNullValue"] is True:
+                field["comboIds"].insert(0, '')
+                field["comboNames"].insert(0, '')
+            options = dict(zip(field["comboIds"], field["comboNames"]))
+            print(options)
+            try:
+                value = options[field["selectedId"]]
+            except KeyError:
+                value = list(options.values())[0]
+
+            for val in options.values():
+                xml += '<item>'
+                xml += '<property name="text">'
+                xml += f'<string>{val}</string>'
+                xml += '</property>'
+                xml += '</item>'
+            xml += f'<property name="value">'
+            xml += f'<string>{value}</string>'
+            xml += f'</property>'
+        elif widget_type == "button":
+            xml += f'<widget class="QPushButton" name="{widget_name}">'
+            xml += f'<property name="text">'
+            xml += f'<string>{value}</string>'
+            xml += f'</property>'
+            if (field["widgetfunction"]["functionName"] == "get_info_node"):
+                xml += f'<property name="action">'
+                xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
+                xml += f'</property>'
+        else:
+            xml += f'<widget class="QLineEdit" name="{widget_name}">'
+            xml += f'<property name="text">'
+            xml += f'<string>{value}</string>'
+            xml += '</property>'
+
+        xml += f'<property name="readOnly">'
+        xml += f'<bool>false</bool>'
+        xml += '</property>'
+        xml += '</widget>'
+        xml += '</item>\n'
+
+        lyt_data_1 += xml
+
+    form_xml = ""
+    form_xml += '<layout class="QHBoxLayout" name="lyt_data">'
+    form_xml += '  <item>'
+    form_xml += '    <layout class="QGridLayout" name="lyt_data_1">'
+    form_xml += lyt_data_1
     form_xml += '    </layout>'
     form_xml += '  </item>'
     form_xml += '</layout>'

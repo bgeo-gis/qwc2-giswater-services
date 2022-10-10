@@ -99,7 +99,7 @@ class GwGetInfoFromCoordinates(Resource):
 
         request =  {
             "client": {
-                "device": 4, "infoType": 1, "lang": "en_US"
+                "device": 5, "infoType": 1, "lang": "en_US"
             }, 
             "form": {
                 "editable": "False"
@@ -117,7 +117,9 @@ class GwGetInfoFromCoordinates(Resource):
         }
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_getinfofromcoordinates($${request_json}$$);"
+        print(f"SERVER EXECUTION: {sql}\n")
         result: dict = db.execute(sql).fetchone()[0]
+        print(f"SERVER RESPONSE: {result}\n\n")
 
         return handle_db_result(result)
 
@@ -149,7 +151,7 @@ class GwGetInfoFromId(Resource):
 
         request =  {
             "client": {
-                "device": 4, "infoType": 1, "lang": "en_US"
+                "device": 5, "infoType": 1, "lang": "en_US"
             }, 
             "form": {
                 "editable": "False"
@@ -162,8 +164,9 @@ class GwGetInfoFromId(Resource):
         }
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_getinfofromid($${request_json}$$);"
+        print(f"SERVER EXECUTION: {sql}\n")
         result: dict = db.execute(sql).fetchone()[0]
-        # print(result)
+        print(f"SERVER RESPONSE: {result}\n\n")
         return handle_db_result(result)
 
 """ readyness probe endpoint """
