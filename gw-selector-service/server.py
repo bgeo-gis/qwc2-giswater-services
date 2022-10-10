@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication
 
 from qwc_services_core.api import Api
 from qwc_services_core.app import app_nocache
-from qwc_services_core.auth import auth_manager, optional_auth
+from qwc_services_core.auth import auth_manager, optional_auth, get_identity
 from qwc_services_core.api import CaseInsensitiveArgument
 from qwc_services_core.tenant_handler import TenantHandler
 from qwc_services_core.runtime_config import RuntimeConfig
@@ -64,6 +64,7 @@ def get_config() -> RuntimeConfig:
     return config_handler.tenant_config(tenant)
 
 def get_db() -> DatabaseEngine:
+    print(f"DB URL: {get_config().get('db_url')}")
     return DatabaseEngine().db_engine(get_config().get("db_url"))
 
 def get_schema_from_theme(theme: str, config: RuntimeConfig) -> Optional[str]:
@@ -73,17 +74,46 @@ def get_schema_from_theme(theme: str, config: RuntimeConfig) -> Optional[str]:
         return theme.get("schema")
     return None
 
-def handle_db_result(result: dict) -> Response:
+def handle_db_result(result: dict, theme: str) -> Response:
     response = {}
+    if not result:
+        return jsonify({"message": "DB returned null"})
     if 'results' not in result or result['results'] > 0:
         form_xml = create_xml_form_v3(result)
+        layer_columns = {}
+        db_layers = get_db_layers(theme)
+        
+        for k, v in db_layers.items():
+            if v in result['body']['data']['layerColumns']:
+                layer_columns[k] = result['body']['data']['layerColumns'][v]
+
         response = {
             "feature": {},
-            "data": result['body']['data'],
+            "data": {
+                "userValues": result['body']['data']['userValues'],
+                "geometry": result['body']['data']['geometry'],
+                "layerColumns": layer_columns
+            },
             "form": result['body']['form'],
             "form_xml": form_xml
         }
     return jsonify(response)
+
+def parse_layers(request_layers: str, config: RuntimeConfig, theme: str) -> List[str]:
+    layers = []
+    db_layers = get_db_layers(theme)
+
+    for l in request_layers.split(','):
+        if l in db_layers:
+            layers.append(db_layers[l])
+    return layers
+
+def get_db_layers(theme: str) -> List[str]:
+    db_layers = []
+    theme = get_config().get("themes").get(theme)
+    if theme is not None:
+        db_layers = theme.get("layers")
+    return db_layers
 
 @api.route('/getselector')
 class GwGetSelector(Resource):
@@ -96,17 +126,20 @@ class GwGetSelector(Resource):
         """
         args = getselector_parser.parse_args()
 
+        identity = get_identity()
+        print(f"IDENTITY = {identity}")
         config = get_config()
         db = get_db()
         schema = get_schema_from_theme(args["theme"], config)
         if schema is None:
             return jsonify({"schema": schema})
 
-        layers = args['layers'].split(',')
+        # layers = args['layers'].split(',')
+        layers = parse_layers(args["layers"], config, args["theme"])
 
         request =  {
             "client": {
-                "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(args['epsg']), "cur_user": "test"
+                "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(args['epsg']), "cur_user": str(identity)
             }, 
             "form": {
                 "currentTab": str(args["currentTab"])
@@ -123,11 +156,11 @@ class GwGetSelector(Resource):
         }
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_getselectors($${request_json}$$);"
-        print(sql)
+        print(f"SERVER EXECUTION: {sql}\n")
         with db.begin() as conn:
             result: dict = conn.execute(text(sql)).fetchone()[0]
-            print(result)
-            return handle_db_result(result)
+            print(f"SERVER RESPONSE: {result}\n\n")
+            return handle_db_result(result, args["theme"])
 
 
 @api.route('/setselector')
@@ -141,17 +174,20 @@ class GwSetSelector(Resource):
         """
         args = setselector_parser.parse_args()
 
+        identity = get_identity()
+        print(f"IDENTITY = {identity}")
         config = get_config()
         db = get_db()
         schema = get_schema_from_theme(args["theme"], config)
         if schema is None:
             return jsonify({"schema": schema})
 
-        layers = args['layers'].split(',')
+        # layers = args['layers'].split(',')
+        layers = parse_layers(args["layers"], config, args["theme"])
 
         request =  {
             "client": {
-                "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(args['epsg']), "cur_user": "test"
+                "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(args['epsg']), "cur_user": str(identity)
             }, 
             "form": {}, 
             "feature": {},
@@ -170,11 +206,11 @@ class GwSetSelector(Resource):
         }
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_setselectors($${request_json}$$);"
-        print(sql)
+        print(f"SERVER EXECUTION: {sql}\n")
         with db.begin() as conn:
             result: dict = conn.execute(text(sql)).fetchone()[0]
-            print(result)
-            return handle_db_result(result)
+            print(f"SERVER RESPONSE: {result}\n\n")
+            return handle_db_result(result, args["theme"])
 
 
 """ readyness probe endpoint """
