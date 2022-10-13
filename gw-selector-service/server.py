@@ -197,13 +197,17 @@ class GwSetSelector(Resource):
                 "pageInfo": {},
                 "selectorType": str(args["selectorType"]),
                 "tabName": str(args['tabName']),
-                "id": str(args['id']),
-                "isAlone": str(args['isAlone']),
-                "disableParent": str(args['disableParent']),
-                "value": str(args['value']),
                 "addSchema": str(args['addSchema'])
             }
         }
+        if args['id'] == 'chk_all':
+            request['data']['checkAll'] = str(args['value'])
+        else:
+            request['data']['id'] = str(args['id'])
+            request['data']['isAlone'] = str(args['isAlone'])
+            request['data']['disableParent'] = str(args['disableParent'])
+            request['data']['value'] = str(args['value'])
+
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_setselectors($${request_json}$$);"
         print(f"SERVER EXECUTION: {sql}\n")

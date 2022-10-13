@@ -53,7 +53,7 @@ def create_xml_form_v3(db_result: dict) -> str:
         form_xml += f'<string>{tab["tabLabel"]}</string>'
         form_xml += '</attribute>'
 
-        tab_xml = sel_tab_xml(tab["fields"], tab["tabName"])
+        tab_xml = sel_tab_xml(tab["fields"], tab["tabName"], tab["manageAll"])
 
         form_xml += f'<layout class="QGridLayout" name="lyt_{tab["tabName"]}">'
         form_xml += tab_xml
@@ -70,76 +70,113 @@ def create_xml_form_v3(db_result: dict) -> str:
     return form_xml
 
 
-def sel_tab_xml(fields, tab_name):
+def sel_tab_xml(fields, tab_name, manage_all):
 
     xml = ''
+    chk_all_xml = ''
+    tab_xml = ''
+    chk_all = False
+    all_checked = True
+
     for idx, field in enumerate(fields):
         row = field["orderby"]
+        if chk_all:
+            row += 1
         value = ""
         if "value" in field:
             value = field["value"]
+            if value is False:
+                all_checked = False
         
         widget_type = field["type"]
         widget_name = field["widgetname"]
 
-        xml += f'<item row="{row}" column="0">'
-        xml += '<widget class="QLabel" name="label">'
-        xml += '<property name="text">'
-        xml += f'<string>{field["label"]}</string>'
-        xml += '</property>'
-        xml += '</widget>'
-        xml += '</item>'
-        xml += f'<item row="{row}" column="1">'
+        tab_xml += f'<item row="{row}" column="0">'
+        tab_xml += '<widget class="QLabel" name="label">'
+        tab_xml += '<property name="text">'
+        tab_xml += f'<string>{field["label"]}</string>'
+        tab_xml += '</property>'
+        tab_xml += '</widget>'
+        tab_xml += '</item>'
+        tab_xml += f'<item row="{row}" column="1">'
         
         if widget_type == "check":
-            xml += f'<widget class="QCheckBox" name="{widget_name}">'
-            xml += f'<property name="checked">'
-            xml += f'<boolean>{value}</boolean>'
-            xml += f'</property>'
+            tab_xml += f'<widget class="QCheckBox" name="{widget_name}">'
+            tab_xml += f'<property name="checked">'
+            tab_xml += f'<boolean>{value}</boolean>'
+            tab_xml += f'</property>'
             # Action setselectors
-            xml += f'<property name="action">'
-            xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "id": "{widget_name}", "value": "{value}"}}}}</string>'
-            xml += f'</property>'
+            tab_xml += f'<property name="action">'
+            tab_xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "id": "{widget_name}", "value": "{value}"}}}}</string>'
+            tab_xml += f'</property>'
         elif widget_type == "datetime":
-            xml += f'<widget class="QDateTimeEdit" name="{widget_name}">'
-            xml += f'<property name="value">'
-            xml += f'<string>{value}</string>'
-            xml += f'</property>'
+            tab_xml += f'<widget class="QDateTimeEdit" name="{widget_name}">'
+            tab_xml += f'<property name="value">'
+            tab_xml += f'<string>{value}</string>'
+            tab_xml += f'</property>'
         elif widget_type == "combo":
-            xml += f'<widget class="QComboBox" name="{widget_name}">'
+            tab_xml += f'<widget class="QComboBox" name="{widget_name}">'
             options = dict(zip(field["comboIds"], field["comboNames"]))
             value = options[field["selectedId"]]
 
             for val in options.values():
-                xml += '<item>'
-                xml += '<property name="text">'
-                xml += f'<string>{val}</string>'
-                xml += '</property>'
-                xml += '</item>'
-            xml += f'<property name="value">'
-            xml += f'<string>{value}</string>'
-            xml += f'</property>'
+                tab_xml += '<item>'
+                tab_xml += '<property name="text">'
+                tab_xml += f'<string>{val}</string>'
+                tab_xml += '</property>'
+                tab_xml += '</item>'
+            tab_xml += f'<property name="value">'
+            tab_xml += f'<string>{value}</string>'
+            tab_xml += f'</property>'
         elif widget_type == "button":
-            xml += f'<widget class="QPushButton" name="{widget_name}">'
-            xml += f'<property name="text">'
-            xml += f'<string>{value}</string>'
-            xml += f'</property>'
+            tab_xml += f'<widget class="QPushButton" name="{widget_name}">'
+            tab_xml += f'<property name="text">'
+            tab_xml += f'<string>{value}</string>'
+            tab_xml += f'</property>'
             if (field["widgetfunction"]["functionName"] == "get_info_node"):
-                xml += f'<property name="action">'
-                xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
-                xml += f'</property>'
+                tab_xml += f'<property name="action">'
+                tab_xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
+                tab_xml += f'</property>'
         else:
-            xml += f'<widget class="QLineEdit" name="{widget_name}">'
-            xml += f'<property name="text">'
-            xml += f'<string>{value}</string>'
-            xml += '</property>'
+            tab_xml += f'<widget class="QLineEdit" name="{widget_name}">'
+            tab_xml += f'<property name="text">'
+            tab_xml += f'<string>{value}</string>'
+            tab_xml += '</property>'
 
-        xml += f'<property name="readOnly">'
-        xml += f'<bool>false</bool>'
-        xml += '</property>'
-        xml += '</widget>'
-        xml += '</item>\n'
+        tab_xml += f'<property name="readOnly">'
+        tab_xml += f'<bool>false</bool>'
+        tab_xml += '</property>'
+        tab_xml += '</widget>'
+        tab_xml += '</item>\n'
 
+    # Add check_all if necessary
+    if manage_all.lower() == "true":
+        chk_all = True
+        chk_all_xml += f'<item row="0" column="0">'
+        chk_all_xml += '<widget class="QLabel" name="label">'
+        chk_all_xml += '<property name="text">'
+        chk_all_xml += f'<string>Check all</string>'
+        chk_all_xml += '</property>'
+        chk_all_xml += '</widget>'
+        chk_all_xml += '</item>'
+        chk_all_xml += f'<item row="0" column="1">'
+
+        chk_all_xml += f'<widget class="QCheckBox" name="chk_all_{tab_name}">'
+        chk_all_xml += f'<property name="checked">'
+        chk_all_xml += f'<boolean>{all_checked}</boolean>'
+        chk_all_xml += f'</property>'
+        # Action setselectors
+        chk_all_xml += f'<property name="action">'
+        chk_all_xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "id": "chk_all", "value": "{all_checked}"}}}}</string>'
+        chk_all_xml += f'</property>'
+
+        chk_all_xml += f'<property name="readOnly">'
+        chk_all_xml += f'<bool>false</bool>'
+        chk_all_xml += '</property>'
+        chk_all_xml += '</widget>'
+        chk_all_xml += '</item>\n'
+
+    xml = chk_all_xml + tab_xml
     return xml
 
 # ============================================
