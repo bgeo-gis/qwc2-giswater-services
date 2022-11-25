@@ -291,6 +291,7 @@ class GwGetList(Resource):
             "data": {
                 "filterFields": {
                     args["idName"]: {
+                        "columnname": args["idName"],
                         "value": args["id"],
                         "filterSign": str(args["filterSign"])
                     }
@@ -305,6 +306,7 @@ class GwGetList(Resource):
             if v in (None, "", "null"):
                 continue
             request["data"]["filterFields"][k] = {
+                "columnname": v["columnname"],
                 "value": v["value"],
                 "filterSign": v["filterSign"]
             }
