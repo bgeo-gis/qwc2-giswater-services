@@ -276,6 +276,7 @@ def tab_onelyt_xml(fields, tab_name):
         widget_type = field['widgettype']
         widget_name = field["column_id"]
         widgetcontrols = field.get('widgetcontrols', {})
+        widgetfunction = field.get('widgetfunction', {})
         # print(f"{field['layoutname']}")
         # print(f"          {widget_name} -> {row}")
 
@@ -364,6 +365,10 @@ def tab_onelyt_xml(fields, tab_name):
         widgetcontrols = json.dumps(widgetcontrols).replace('<', '$lt').replace('>', '$gt')
         xml += f'<property name="widgetcontrols">'
         xml += f'<string>{widgetcontrols}</string>'
+        xml += '</property>'
+        widgetfunction = json.dumps(widgetfunction).replace('<', '$lt').replace('>', '$gt')
+        xml += f'<property name="widgetfunction">'
+        xml += f'<string>{widgetfunction}</string>'
         xml += '</property>'
         xml += '</widget>'
         xml += '</item>\n'
