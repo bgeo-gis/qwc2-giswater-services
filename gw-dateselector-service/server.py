@@ -64,7 +64,6 @@ def handle_db_result(result: dict, theme: str) -> Response:
     if not result:
         return jsonify({"message": "DB returned null"})
     if 'results' not in result or result['results'] > 0:
-        form_xml = create_xml_form_v3(result)
         layer_columns = {}
         db_layers = get_db_layers(theme)
         
@@ -75,12 +74,14 @@ def handle_db_result(result: dict, theme: str) -> Response:
         response = {
             "feature": {},
             "data": {
-                "userValues": result['body']['data']['userValues'],
-                "geometry": result['body']['data']['geometry'],
+                #"userValues": result['body']['data']['userValues'],
+                #"geometry": result['body']['data']['geometry'],
+                "date_from": result['body']['data']['date_from'],
+                "date_to": result['body']['data']['date_to'],
                 "layerColumns": layer_columns
             },
-            "form": result['body']['form'],
-            "form_xml": form_xml
+            "form": {},
+            "form_xml": None
         }
     return jsonify(response)
 
@@ -163,7 +164,8 @@ class GwGetDialog(Resource):
 
 
 getdates_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
-getdates_parser.add_argument('theme', required=False)
+getdates_parser.add_argument('theme', required=True)
+getdates_parser.add_argument('layers', required=True)
 @api.route('/getdates')
 class GwGetDates(Resource):
     @api.expect(getdates_parser)
@@ -191,34 +193,43 @@ class GwGetDates(Resource):
 
         log.info(f" Selected schema -> {str(schema)}")
 
-        dates = [None, None]
-        with db.begin() as conn:
-            sql = (f"SELECT from_date, to_date FROM {schema}.selector_date"
-                f" WHERE cur_user = '{identity}'")
-            log.info(f" Server execution -> {sql}")
-            print(f"SERVER EXECUTION: {sql}\n")
-            row = conn.execute(text(sql)).fetchone()
-            if row:
-                dates = [row[0].strftime("%d/%m/%Y"), row[1].strftime("%d/%m/%Y")]
-
-        # Response
-        response = {
+        layers = parse_layers(args["layers"], config, args["theme"])
+        request =  {
+            "client": {
+                "device": 5, "infoType": 1, "lang": "en_US", "cur_user": str(identity)
+            }, 
+            "form": {}, 
             "feature": {},
             "data": {
-                "date_from": dates[0],
-                "date_to": dates[1]
-            },
-            "form_xml": None
+                "filterFields":{},
+                "pageInfo":{},
+                "action": "GET",
+                "layers": layers
+            }
         }
-        remove_handlers()
-        return jsonify(response)
+        request_json = json.dumps(request)
+        sql = f"SELECT {schema}.gw_fct_dateselector($${request_json}$$);"
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
+        with db.begin() as conn:
+            result = dict()
+            try:
+                result = conn.execute(text(sql)).fetchone()[0]
+            except exc.ProgrammingError:
+                log.warning(" Server execution failed")
+                print(f"Server execution failed\n{traceback.format_exc()}")
+                remove_handlers()
+            log.info(f" Server response -> {json.dumps(result)}")
+            print(f"SERVER RESPONSE: {json.dumps(result)}\n")
+            remove_handlers()
+            return handle_db_result(result, args["theme"])
 
 
 setdates_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
 setdates_parser.add_argument('theme', required=True)
 setdates_parser.add_argument('dateFrom', required=True)
 setdates_parser.add_argument('dateTo', required=True)
-# setdates_parser.add_argument('layers', required=True)
+setdates_parser.add_argument('layers', required=True)
 @api.route('/setdates')
 class GwSetDates(Resource):
     @api.expect(setdates_parser)
@@ -243,44 +254,42 @@ class GwSetDates(Resource):
             return jsonify({"schema": schema})
 
         log.info(f" Selected schema -> {str(schema)}")
+        
 
         from_date = args["dateFrom"]
         to_date = args["dateTo"]
-        with db.begin() as conn:
-            sql = (f"SELECT * FROM {schema}.selector_date"
-                f" WHERE cur_user = '{identity}'")
-            log.info(f" Server execution -> {sql}")
-            print(f"SERVER EXECUTION: {sql}\n")
-            row = conn.execute(text(sql)).fetchone()
-            if not row:
-                log.info(" Not row")
-                sql = (f"INSERT INTO {schema}.selector_date"
-                    f" (from_date, to_date, context, cur_user)"
-                    f" VALUES('{from_date}', '{to_date}', 'om_visit', '{identity}')")
-            else:
-                log.info(f" Contains a row")
-                sql = (f"UPDATE {schema}.selector_date"
-                    f" SET (from_date, to_date) = ('{from_date}', '{to_date}')"
-                    f" WHERE cur_user = '{identity}'")
-            log.info(f" Server execution -> {sql}")
-            print(f"SERVER EXECUTION: {sql}\n")
-            conn.execute(text(sql))
-
-        # Response
-        from_split = from_date.split("-")
-        from_date = f"{from_split[2]}/{from_split[1]}/{from_split[0]}"
-        to_split = to_date.split("-")
-        to_date = f"{to_split[2]}/{to_split[1]}/{to_split[0]}"
-        response = {
+        layers = parse_layers(args["layers"], config, args["theme"])
+        request =  {
+            "client": {
+                "device": 5, "infoType": 1, "lang": "en_US", "cur_user": str(identity)
+            }, 
+            "form": {}, 
             "feature": {},
             "data": {
+                "filterFields":{},
+                "pageInfo":{},
+                "action": "SET",
                 "date_from": from_date,
-                "date_to": to_date
-            },
-            "form_xml": None
+                "date_to": to_date,
+                "layers": layers
+            }
         }
-        remove_handlers()
-        return jsonify(response)
+        request_json = json.dumps(request)
+        sql = f"SELECT {schema}.gw_fct_dateselector($${request_json}$$);"
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
+        with db.begin() as conn:
+            result = dict()
+            try:
+                result = conn.execute(text(sql)).fetchone()[0]
+            except exc.ProgrammingError:
+                log.warning(" Server execution failed")
+                print(f"Server execution failed\n{traceback.format_exc()}")
+                remove_handlers()
+            log.info(f" Server response -> {json.dumps(result)}")
+            print(f"SERVER RESPONSE: {json.dumps(result)}\n")
+            remove_handlers()
+            return handle_db_result(result, args["theme"])
 
 
 """ readyness probe endpoint """
