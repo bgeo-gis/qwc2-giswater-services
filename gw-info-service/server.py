@@ -180,7 +180,7 @@ class GwGetInfoFromCoordinates(Resource):
              remove_handlers()
         result: dict = db.execute(sql).fetchone()[0]
         log.info(f" Server response: {str(result)[0:100]}")
-        print(f"SERVER RESPONSE: {result}\n\n")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
         remove_handlers()
         return handle_db_result(result)
 
@@ -242,8 +242,8 @@ class GwGetInfoFromId(Resource):
              print(f"Server execution failed\n{traceback.format_exc()}")
              remove_handlers()
              
-        log.info(f" Server response")
-        print(f"SERVER RESPONSE: {result}\n\n")
+        log.info(f" Server response {str(result)[0:100]}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
         remove_handlers()
         return handle_db_result(result)
 
@@ -323,8 +323,8 @@ class GwGetList(Resource):
              print(f"Server execution failed\n{traceback.format_exc()}")
              remove_handlers()
 
-        log.info(f" Server response")
-        print(f"SERVER RESPONSE: {result}\n\n")
+        log.info(f" Server response {str(result)[0:100]}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
         remove_handlers()
         return jsonify(result)
 

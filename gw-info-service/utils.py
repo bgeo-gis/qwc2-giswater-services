@@ -119,7 +119,8 @@ def create_xml_form_v2(db_result: dict, simplified: bool=True) -> str:
                 form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
             else:
                 form_xml += data_tab_xml(db_result["body"]["data"]["fields"])
-        elif (tab["tabName"] == "tab_visit"):
+        elif (tab["tabName"] in ("tab_visit", "tab_documents")):
+            print(f"TEST {tab['tabName']}")
             form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
 
         form_xml += '</widget>\n'
@@ -277,8 +278,8 @@ def tab_onelyt_xml(fields, tab_name):
         widget_name = field["column_id"]
         widgetcontrols = field.get('widgetcontrols', {})
         widgetfunction = field.get('widgetfunction', {})
-        # print(f"{field['layoutname']}")
-        # print(f"          {widget_name} -> {row}")
+        print(f"{field['layoutname']}")
+        print(f"          {widget_name} -> {row}")
 
         xml = ''
         read_only = "false"
@@ -303,7 +304,10 @@ def tab_onelyt_xml(fields, tab_name):
             xml += f'<boolean>{value}</boolean>'
             xml += f'</property>'
         elif widget_type == "datetime":
-            xml += f'<widget class="QDateTimeEdit" name="{widget_name}">'
+            widget_class = "QDateTimeEdit"
+            if field.get("datatype") == 'date':
+                widget_class = "QDateEdit"
+            xml += f'<widget class="{widget_class}" name="{widget_name}">'
             xml += f'<property name="value">'
             xml += f'<string>{value}</string>'
             xml += f'</property>'
