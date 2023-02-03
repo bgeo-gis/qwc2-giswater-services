@@ -309,7 +309,7 @@ class GwGetList(Resource):
                 "columnname": v["columnname"],
                 "value": v["value"],
                 "filterSign": v["filterSign"]
-            }
+        }
 
         request_json = json.dumps(request)
         sql = f"SELECT {schema}.gw_fct_getlist($${request_json}$$);"
@@ -327,6 +327,142 @@ class GwGetList(Resource):
         print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
         remove_handlers()
         return jsonify(result)
+
+getgraph_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
+getgraph_parser.add_argument('theme', required=True)
+getgraph_parser.add_argument('node_id', required=True)
+@api.route('/getgraph')
+class GwGetGraph(Resource):
+    @api.expect(getgraph_parser)
+    @optional_auth
+    def get(self):
+        """
+        Submit query
+        Returns additional information at clicked map position.
+        """
+        print("GETGRAPH-------------------------------------------------------")
+        config = get_config()
+        log = create_log(self)
+        args = getgraph_parser.parse_args()
+        node_id = args["node_id"]
+        print(f"RECEIVED NODES {node_id}")
+        try:
+            db = get_db()
+        except:
+            remove_handlers() 
+        
+        schema = get_schema_from_theme(args["theme"], config)
+        # print(f"theme -> {args['theme']} -> {config}")
+        # print(f"schema -> {schema}")
+        if schema is None:
+            log.warning(" Schema is None")
+            remove_handlers()
+            return jsonify({"schema": schema})
+
+        log.info(f" Selected schema -> {str(schema)}")
+
+        request =  {
+            "client": {
+                "device": 4, "infoType":1, "lang":"ES"
+            }, 
+            "form": {}, 
+            "feature": {
+                "type":"node",
+                "id": node_id,
+                "parameter":"",
+                "interval":"",
+                "result_id":"e96"
+            },
+            "data": {}
+        }
+        request_json = json.dumps(request)
+        sql = f"SELECT {schema}.gw_fct_gettimeseries($${request_json}$$);"
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
+        result = dict()
+        try:
+             result = db.execute(sql).fetchone()[0]
+        except exc.ProgrammingError:
+             log.warning(" Server execution failed")
+             print(f"Server execution failed\n{traceback.format_exc()}")
+             remove_handlers()
+
+        log.info(f" Server response {str(result)[0:100]}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
+        remove_handlers()
+        return jsonify(result)
+
+
+getdma_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
+getdma_parser.add_argument('theme', required=True)
+#Coordinates
+#getdma_parser.add_argument('epsg', required=True)
+getdma_parser.add_argument('xcoord', required=True)
+getdma_parser.add_argument('ycoord', required=True)
+getdma_parser.add_argument('zoomRatio', required=True)
+@api.route('/getdma')
+class GwGetDma(Resource):
+    @api.expect(getdma_parser)
+    @optional_auth
+    def get(self):
+        """
+        Submit query
+        Returns additional information at clicked map position.
+        """
+        print("******************GETDMA*******************")
+        config = get_config()
+        log = create_log(self)
+        args = getdma_parser.parse_args()
+        # epsg = args["epsg"]
+        try:
+            db = get_db()
+        except:
+            remove_handlers() 
+        
+        schema = get_schema_from_theme(args["theme"], config)
+        # print(f"theme -> {args['theme']} -> {config}")
+        # print(f"schema -> {schema}")
+        if schema is None:
+            log.warning(" Schema is None")
+            remove_handlers()
+            return jsonify({"schema": schema})
+
+        log.info(f" Selected schema -> {str(schema)}")
+
+        request =  {
+            "client": {
+                "device": 4, "infoType":1, "lang":"ES"
+            }, 
+            "form": {}, 
+            "feature": {
+                "tableName" : "v_edit_dma", "id":"1" #Hardcoded
+            },
+            "data": {
+                "filterFields":{}, "pageInfo":{}, "selectionMode":"wholeSelection",
+                 "coordinates": {
+                    "xcoord": float(args['xcoord']),
+                    "ycoord": float(args['ycoord']),
+                    "zoomRatio": float(args['zoomRatio']),
+                }
+            }
+        }
+        request_json = json.dumps(request)
+        sql = f"SELECT {schema}.gw_fct_getdmabalance($${request_json}$$);"
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
+        result = dict()
+        try:
+             result = db.execute(sql).fetchone()[0]
+        except exc.ProgrammingError:
+             log.warning(" Server execution failed")
+             print(f"Server execution failed\n{traceback.format_exc()}")
+             remove_handlers()
+
+        log.info(f" Server response {str(result)[0:100]}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
+        remove_handlers()
+        return jsonify(result)
+
 
 """ readyness probe endpoint """
 @app.route("/ready", methods=['GET'])
