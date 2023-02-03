@@ -3,6 +3,7 @@ import json
 
 def mincut_create_xml_form(result: dict) -> str:
     layout_xmls = get_layout_xmls(result)
+    tab_names = {'tab_plan': 'Plan', 'tab_exec': 'Exec', 'tab_hydro': 'Hydro', 'tab_log': 'Log'}
 
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'
@@ -23,7 +24,7 @@ def mincut_create_xml_form(result: dict) -> str:
     for tabname in ['tab_plan', 'tab_exec', 'tab_hydro', 'tab_log']:
         form_xml += f'<widget class="QWidget" name="{tabname}">'
         form_xml += '<attribute name="title">'
-        form_xml += f'<string>{tabname}</string>'
+        form_xml += f'<string>{tab_names.get(tabname)}</string>'
         form_xml += '</attribute>'
         form_xml += f'<layout class="QVBoxLayout" name="lyt_{tabname}">'
 
@@ -210,6 +211,17 @@ def create_widget_xml(field: dict) -> str:
         #     xml += f'<property name="action">'
         #     xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
         #     xml += f'</property>'
+    elif widget_type == "spinbox":
+        xml += f'<widget class="QSpinBox" name="{widget_name}">'
+        # xml += f'<property name="value">'
+        # xml += f'<number>0</number>'
+        # xml += f'<number></number>'
+        # xml += '</property>'
+    elif widget_type == "textarea":
+        xml += f'<widget class="QTextEdit" name="{widget_name}">'
+        xml += f'<property name="text">'
+        xml += f'<string>{value}</string>'
+        xml += '</property>'
     else:
         xml += f'<widget class="QLineEdit" name="{widget_name}">'
         xml += f'<property name="text">'
@@ -232,3 +244,54 @@ def create_widget_xml(field: dict) -> str:
 
     return xml
 
+
+def mincutmanager_create_xml_form(result: dict) -> str:
+    layout_xmls = mincutmanager_get_layout_xmls(result)
+
+    form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    form_xml += '<ui version="4.0">'
+    form_xml += '<widget class="QWidget" name="dlg_mincutmanager">'
+    form_xml += '<layout class="QVBoxLayout" name="MainLayout">'
+
+    # Layout top (id, state & work order)
+    form_xml += '<item>'
+    form_xml += layout_xmls.get('lyt_mincut_mng_1', '')
+    form_xml += '</item>'
+
+    # Layout mid
+    form_xml += '<item>'
+    form_xml += layout_xmls.get('lyt_mincut_mng_2', '')
+    form_xml += '</item>'
+
+    # Layout bot (btn_accept, btn_cancel)
+    form_xml += '<item>'
+    form_xml += layout_xmls.get('lyt_mincut_mng_3', '')
+    form_xml += '</item>'
+
+    form_xml += '</layout>'
+    form_xml += '</widget>'
+    form_xml += '</ui>'
+
+    return form_xml
+
+def mincutmanager_get_layout_xmls(result: dict) -> dict:
+    widgets_x_layouts = {}
+    for field in result['body']['data']['fields']:
+        layoutname = field['layoutname']
+        if layoutname not in widgets_x_layouts:
+            widgets_x_layouts[layoutname] = []
+        widgets_x_layouts[layoutname].append(field)
+    
+    layout_xmls = {}
+    for layout, fields in widgets_x_layouts.items():
+        # TODO: Improve this, extract from get_layout_xmls. Maybe the <layout> tags can go in {class}_create_xml_form
+        layout_class = "QGridLayout"
+        if layout in ('lyt_mincut_mng_1', 'lyt_mincut_mng_2', 'lyt_mincut_mng_3'):
+            layout_class = "QHBoxLayout"
+        layout_xml = f'<layout class="{layout_class}" name="{layout}">'
+        for field in fields:
+            layout_xml += create_widget_xml(field)
+        layout_xml += '</layout>'
+        layout_xmls[layout] = layout_xml
+
+    return layout_xmls

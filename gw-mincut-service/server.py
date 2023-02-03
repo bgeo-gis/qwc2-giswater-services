@@ -9,7 +9,7 @@ import traceback
 import requests
 import logging
 import json
-from utils import mincut_create_xml_form
+from utils import mincut_create_xml_form, mincutmanager_create_xml_form
 
 from qwc_services_core.api import Api
 from qwc_services_core.app import app_nocache
@@ -66,6 +66,25 @@ def handle_db_result(result: dict, theme: str) -> Response:
     if 'results' not in result or result['results'] > 0:
         try:
             form_xml = mincut_create_xml_form(result)
+        except:
+            form_xml = None
+
+        response = {
+            "status": result['status'],
+            "version": result['version'],
+            "body": result['body'],
+            "form_xml": form_xml
+        }
+    return jsonify(response)
+
+def handle_db_result_mincutmanager(result: dict, theme: str) -> Response:
+    response = {}
+    if not result:
+        logging.warning(" DB returned null")
+        return jsonify({"message": "DB returned null"})
+    if 'results' not in result or result['results'] > 0:
+        try:
+            form_xml = mincutmanager_create_xml_form(result)
         except:
             form_xml = None
 
@@ -357,6 +376,130 @@ class GwAcceptMincut(Resource):
             remove_handlers()
             return handle_db_result(result, args["theme"])
 # endregion
+
+
+getmincut_manager = reqparse.RequestParser()
+getmincut_manager.add_argument('theme', required=True)
+
+@api.route('/getmincutmanager')
+class GwMincutManager(Resource):
+    @api.expect(getmincut_manager)
+    @optional_auth
+    def get(self):
+        """Submit query
+
+        Returns additional information at clicked map position.
+        """
+        print("hola")
+        config = get_config()
+        log = create_log(self)
+        args = getmincut_manager.parse_args()
+        try:
+            db = get_db()
+        except:
+            remove_handlers() 
+
+        schema = get_schema_from_theme(args["theme"], config)
+        print("theme -> ", schema)
+        if schema is None:
+            log.warning(" Schema is None")
+            remove_handlers()
+            return jsonify({"schema": schema})
+
+        log.info(f" Selected schema {str(schema)}")
+
+        request_json = {}
+
+        sql = f"SELECT {schema}.gw_fct_getmincut_manager($${request_json}$$);"
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
+        with db.begin() as conn:
+            result = dict()
+            try:
+                result = conn.execute(text(sql)).fetchone()[0]
+            except exc.ProgrammingError:
+                log.warning(" Server execution failed")
+                print(f"Server execution failed\n{traceback.format_exc()}")
+                remove_handlers()
+            log.info(f" Server response -> {json.dumps(result)}")
+            print(f"SERVER RESPONSE: {json.dumps(result)}\n")
+            remove_handlers()
+            return handle_db_result_mincutmanager(result, args["theme"])
+
+
+getlist_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
+getlist_parser.add_argument('theme', required=True)
+getlist_parser.add_argument('tabName', required=True)
+getlist_parser.add_argument('widgetname', required=True)
+getlist_parser.add_argument('formtype', required=False, default="form_feature")
+getlist_parser.add_argument('tableName', required=True)
+getlist_parser.add_argument('filterSign', required=False, default="=")
+getlist_parser.add_argument('filterFields', required=False, default={})
+@api.route('/getlist')
+class GwGetList(Resource):
+    @api.expect(getlist_parser)
+    @optional_auth
+    def get(self):
+        config = get_config()
+        log = create_log(self)
+        args = getlist_parser.parse_args()
+        try:
+            db = get_db()
+        except:
+            remove_handlers()
+
+        schema = get_schema_from_theme(args["theme"], config)
+
+        request =  {
+            "client": {
+                "device": 5, "infoType": 1, "lang": "en_US"
+            },
+            "form": {
+                "formName": "",
+                "tabName": str(args['tabName']),
+                "widgetname": str(args['widgetname']),
+                "formtype": str(args['formtype'])
+            },
+            "feature": {
+                "tableName": args["tableName"]
+            },
+            "data": {
+                "filterFields": {},
+                "pageInfo": {}
+            }
+        }
+
+        # Manage filters
+        print("args[filterFields] -> ", args["filterFields"])
+        if args["filterFields"] in (None, "", "null", "{}"):
+            request["data"]["filterFields"] = {}
+        else:
+            filterFields = json.loads(args["filterFields"])
+            for k, v in filterFields.items():
+                if v in (None, "", "null"):
+                    continue
+                request["data"]["filterFields"][k] = {
+                #   "columnname": v["columnname"],
+                    "value": v["value"],
+                    "filterSign": v["filterSign"]
+                }
+
+        request_json = json.dumps(request)
+        sql = f"SELECT {schema}.gw_fct_getlist($${request_json}$$);"
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
+        result = dict()
+        try:
+             result = db.execute(sql).fetchone()[0]
+        except exc.ProgrammingError:
+             log.warning(" Server execution failed")
+             print(f"Server execution failed\n{traceback.format_exc()}")
+             remove_handlers()
+
+        log.info(f" Server response {str(result)[0:100]}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
+        remove_handlers()
+        return jsonify(result)
 
 
 """ readyness probe endpoint """
