@@ -397,6 +397,11 @@ def getlist():
 
     schema = utils.get_schema_from_theme(theme, config)
 
+    if schema is None:
+        log.warning(" Schema is None")
+        utils.remove_handlers()
+        return jsonify({"schema": schema})
+
     request_json =  {
         "client": {
             "device": 5, "infoType": 1, "lang": "en_US"
