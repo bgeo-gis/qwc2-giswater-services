@@ -34,7 +34,10 @@ def getselector():
     currentTab = args.get("currentTab")
     selectorType = args.get("selectorType")
     loadProject = args.get("loadProject")
-
+    #ids = args.get("ids")
+    
+    #ids = [int(i) for i in ids.split(",")]
+    
     schema = utils.get_schema_from_theme(theme, config)
 
     if schema is None:
@@ -60,9 +63,12 @@ def getselector():
             "pageInfo": {},
             "selectorType": str(selectorType),
             "filterText": "",
-            "loadProject": loadProject
+            "loadProject": loadProject,
         }
     }
+
+
+    print("request_json ", request_json)
     request_json = json.dumps(request_json)
     sql = f"SELECT {schema}.gw_fct_getselectors($${request_json}$$);"
     log.info(f" Server execution -> {sql}")
