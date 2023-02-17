@@ -12,6 +12,7 @@ from flowtrace.flowtrace import flowtrace_bp
 from selector.selector import selector_bp
 from profile.profile import profile_bp
 from dateselector.dateselector import dateselector_bp
+from visit.visit import visit_bp
 
 
 # Flask application
@@ -41,6 +42,7 @@ app.register_blueprint(flowtrace_bp, url_prefix='/flowtrace')
 app.register_blueprint(selector_bp, url_prefix='/selector')
 app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(dateselector_bp, url_prefix='/dateselector')
+app.register_blueprint(visit_bp, url_prefix='/visit')
 
 """ readyness probe endpoint """
 @app.route("/ready", methods=['GET'])
