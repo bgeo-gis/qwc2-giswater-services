@@ -20,10 +20,6 @@ def fromcoordinates():
     """
     config = utils.get_config()
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers()
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
@@ -33,6 +29,11 @@ def fromcoordinates():
     xcoord = args.get("xcoord")
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
+
+    try:
+        db = utils.get_db(theme)
+    except:
+        utils.remove_handlers()
 
     schema = utils.get_schema_from_theme(theme, config)
     
@@ -86,16 +87,17 @@ def fromcoordinates():
 def fromid():
     config = utils.get_config()
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     tableName = args.get("tableName")
     feature_id = args.get("id")
+
+    try:
+        db = utils.get_db(theme)
+    except:
+        utils.remove_handlers()
 
     schema = utils.get_schema_from_theme(theme, config)
 
@@ -218,21 +220,21 @@ def getgraph():
     Submit query
     Returns additional information at clicked map position.
     """
-    print("GETGRAPH-------------------------------------------------------")
-    config = utils.get_config()
-    log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     node_id = args.get("node_id")
 
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+    try:
+        db = utils.get_db(theme)
+    except:
+        utils.remove_handlers() 
+
     schema = utils.get_schema_from_theme(theme, config)
-    print(f"RECEIVED NODES {node_id}")
+
     # print(f"theme -> {args['theme']} -> {config}")
     # print(f"schema -> {schema}")
     if schema is None:
@@ -282,13 +284,6 @@ def getdma():
     Returns additional information at clicked map position.
     """
 
-    config = utils.get_config()
-    log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
-
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
@@ -297,6 +292,13 @@ def getdma():
     xcoord = args.get("xcoord")
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
+
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+    try:
+        db = utils.get_db(theme)
+    except:
+        utils.remove_handlers()
 
     schema = utils.get_schema_from_theme(theme, config)
     # print(f"theme -> {args['theme']} -> {config}")
