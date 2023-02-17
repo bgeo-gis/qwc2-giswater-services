@@ -65,15 +65,17 @@ def nodefromcoordinates():
 
     log.info(f" Selected schema -> {str(schema)}")
     coords = coords.split(',')
+    layers = utils.parse_layers(layers, config, theme)
     request_json =  {
         "client": {
             "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(epsg), "cur_user": str(identity)
         }, 
         "form": {}, 
         "feature": {
-            
         },
         "data": {
+            "activeLayer": layers[0],
+            "visibleLayer": layers,
             "filterFields": {},
             "pageInfo": {},
             "coordinates": {
