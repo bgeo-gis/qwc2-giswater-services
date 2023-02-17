@@ -31,7 +31,7 @@ def dialog():
     return jsonify(response)
 
 
-@dateselector_bp.route('/dates', methods=['GET', 'POST'])
+@dateselector_bp.route('/dates', methods=['GET', 'PUT'])
 @optional_auth
 def dates():
     """Submit query
