@@ -3,6 +3,7 @@ from datetime import date
 
 from qwc_services_core.runtime_config import RuntimeConfig
 from qwc_services_core.database import DatabaseEngine
+from qwc_services_core.auth import get_identity
 
 import os
 import logging
@@ -11,15 +12,41 @@ app = None
 api = None
 tenant_handler = None
 
+
+def create_body(project_epsg=None, form='', feature='', filter_fields='', extras=None):
+    """ Create and return parameters as body to functions"""
+
+    # info_types = {'full': 1}
+    info_type = 1
+    lang = "es_ES"  # TODO: get from app lang
+
+    client = f'$${{"client":{{"device":5, "lang":"{lang}", "cur_user": "{str(get_identity())}"'
+    if info_type is not None:
+        client += f', "infoType":{info_type}'
+    if project_epsg is not None:
+        client += f', "epsg":{project_epsg}'
+    client += f'}}, '
+
+    form = f'"form":{{{form}}}, '
+    feature = f'"feature":{{{feature}}}, '
+    filter_fields = f'"filterFields":{{{filter_fields}}}'
+    page_info = f'"pageInfo":{{}}'
+    data = f'"data":{{{filter_fields}, {page_info}'
+    if extras is not None:
+        data += ', ' + extras
+    data += f'}}}}$$'
+    body = "" + client + form + feature + data
+
+    return body
+
+
 def get_config() -> RuntimeConfig:
     tenant = tenant_handler.tenant()
     config_handler = RuntimeConfig("giswater", app.logger)
     return config_handler.tenant_config(tenant)
 
 def get_db(theme: str = None) -> DatabaseEngine:
-    print(f"DB URL: {get_config().get('db_url')}")
     logging.basicConfig
-    logging.info(f"DB URL: {get_config().get('db_url')}")
     db_url = None
     if theme is not None:
         db_url = get_db_url_from_theme(theme)
