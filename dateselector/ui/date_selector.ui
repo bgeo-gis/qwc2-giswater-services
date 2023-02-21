@@ -158,8 +158,8 @@
      <property name="text">
       <string>Close</string>
      </property>
-     <property name="action">
-      <string>{"name": "closeDlg", "params": {}}</string>
+     <property name="widgetfunction">
+      <string>{"functionName": "closeDlg", "params": {}}</string>
      </property>
     </widget>
    </item>
@@ -168,8 +168,8 @@
      <property name="text">
       <string>OK</string>
      </property>
-     <property name="action">
-      <string>{"name": "accept", "params": {}}</string>
+     <property name="widgetfunction">
+      <string>{"functionName": "accept", "params": {}}</string>
      </property>
     </widget>
    </item>
