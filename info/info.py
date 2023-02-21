@@ -190,9 +190,9 @@ def getlist():
         if v in (None, "", "null"):
             continue
         request_json["data"]["filterFields"][k] = {
-            "columnname": v["columnname"],
-            "value": v["value"],
-            "filterSign": v["filterSign"]
+            "columnname": v.get("columnname"),
+            "value": v.get("value"),
+            "filterSign": v.get("filterSign", "=")
     }
 
     request_json = json.dumps(request_json)
