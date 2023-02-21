@@ -94,7 +94,7 @@ def uploadfile():
             message = "File uploaded successfully!"
 
             # Insert url to om_visit_photo
-            sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, 'https://qwc2dev.bgeo.es/bgeo/photos/{filename}');"
+            sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, '{config.get('images_url')}{filename}');"
 
             log.info(f" Server execution -> {sql}")
             print(f"SERVER EXECUTION: {sql}\n")
