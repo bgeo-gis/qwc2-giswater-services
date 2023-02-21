@@ -269,15 +269,16 @@ def accept():
         db = utils.get_db()
     except:
         utils.remove_handlers() 
-    # args
-    theme = request.args.get("theme")
-    epsg = request.args.get("epsg")
-    mincutId = request.args.get("mincutId")
-    fields = request.args.get("fields")
-    usePsectors = request.args.get("usePsectors")
-    xcoord = request.args.get("xcoord")
-    ycoord = request.args.get("ycoord")
-    zoomRatio = request.args.get("zoomRatio")
+     # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    epsg = args.get("epsg")
+    mincutId = args.get("mincutId")
+    fields = args.get("fields")
+    usePsectors = args.get("usePsectors")
+    xcoord = args.get("xcoord")
+    ycoord = args.get("ycoord")
+    zoomRatio = args.get("zoomRatio")
 
     schema = utils.get_schema_from_theme(theme, config)
 
