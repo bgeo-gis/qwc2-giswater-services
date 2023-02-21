@@ -34,10 +34,11 @@ def create_xml_form(db_result: dict, simplified: bool=True) -> str:
         form_xml += f'<string>{tab["tabLabel"]}</string>'
         form_xml += '</attribute>'
 
-        if (tab["tabName"] == "tab_data"):
-            form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
-        elif (tab["tabName"] in ("tab_visit", "tab_documents")):
-            form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
+        form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
+        # if (tab["tabName"] == "tab_data"):
+        #     form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
+        # elif (tab["tabName"] in ("tab_visit", "tab_documents")):
+        #     form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
 
         form_xml += '</widget>\n'
 
