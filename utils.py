@@ -1,5 +1,6 @@
 from typing import Optional, List
 from datetime import date
+from flask import jsonify
 
 from qwc_services_core.runtime_config import RuntimeConfig
 from qwc_services_core.database import DatabaseEngine
@@ -7,6 +8,7 @@ from qwc_services_core.auth import get_identity
 
 import os
 import logging
+
 
 app = None
 api = None
@@ -38,6 +40,42 @@ def create_body(project_epsg=None, form='', feature='', filter_fields='', extras
     body = "" + client + form + feature + data
 
     return body
+
+def create_response(db_result=None, form_xml=None, status=None, message=None, do_jsonify=False):
+    """ Create and return a json response to send to the client """
+
+    response = {"status": "Failed", "message": {}, "version": {}, "body": {}}
+
+    if status is not None:
+        if status in (True, "Accepted"):
+            response["status"] = "Accepted"
+            if message:
+                response["message"] = {"level": 3, "text": message}
+        else:
+            response["status"] = "Failed"
+            if message:
+                response["message"] = {"level": 2, "text": message}
+            
+        if do_jsonify:
+            response = jsonify(response)
+        return response
+
+    if not db_result and not form_xml:
+        response["status"] = "Failed"
+        response["message"] = {"level": 2, "text": "DB returned null"}
+        if do_jsonify:
+            response = jsonify(response)
+        return response
+    elif form_xml:
+        response["status"] = "Accepted"
+
+    if db_result:
+        response = db_result
+    response["form_xml"] = form_xml
+
+    if do_jsonify:
+            response = jsonify(response)
+    return response
 
 
 def get_config() -> RuntimeConfig:
