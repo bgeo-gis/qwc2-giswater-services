@@ -57,15 +57,13 @@ def getvisit():
 @visit_bp.route('/file', methods=['POST'])
 @optional_auth
 def uploadfile():
-    if 'file' not in request.files:
-        print("No file")
+
+    if not request.files:
+        print("No files")
         utils.remove_handlers()
-        return jsonify({ "message": "No file provided"})
-    file = request.files['file']
-    if file.filename == '':
-        print("No selected file")
-        utils.remove_handlers()
-        return jsonify({ "message": "No file selected"})
+        msg = "No files provided"
+        return utils.create_response(status=False, message=msg, do_jsonify=True)
+    files = request.files.getlist('files[]')
 
     # args
     args = request.form
@@ -84,35 +82,38 @@ def uploadfile():
 
     schema = utils.get_schema_from_theme(theme, config)
 
-    if file:
+    if files:
         status = "Failed"
         message = ""
         try:
-            filename = secure_filename(file.filename)
-            file.save(os.path.join('/home/bgeoadmin/bgeo/images/', filename))
-            status = "Accepted"
-            message = "File uploaded successfully!"
+            for file in files:
+                if not file or file.filename == '':
+                    continue
+                filename = secure_filename(file.filename)
+                file.save(os.path.join('/home/bgeoadmin/bgeo/images/', filename))
+                status = "Accepted"
+                message = "File uploaded successfully!"
 
-            # Insert url to om_visit_photo
-            sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, '{config.get('images_url')}{filename}');"
+                # Insert url to om_visit_photo
+                sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, '{config.get('images_url')}{filename}');"
 
-            log.info(f" Server execution -> {sql}")
-            print(f"SERVER EXECUTION: {sql}\n")
-            try:
-                db.execute(sql)
-            except exc.ProgrammingError:
-                log.warning(" Server execution failed")
-                print(f"Server execution failed\n{traceback.format_exc()}")
+                log.info(f" Server execution -> {sql}")
+                print(f"SERVER EXECUTION: {sql}\n")
+                try:
+                    db.execute(sql)
+                except exc.ProgrammingError:
+                    log.warning(" Server execution failed")
+                    print(f"Server execution failed\n{traceback.format_exc()}")
+                    utils.remove_handlers()
+
                 utils.remove_handlers()
-
-            utils.remove_handlers()
         except Exception as e:
             status = "Failed"
             message = "Error"
             print(e)
         finally:
             utils.remove_handlers()
-            return jsonify({ "status": status, "message": message })
+            return utils.create_response(status=status, message=message, do_jsonify=True)
 
 
 @visit_bp.route('/getlist', methods=['GET'])
