@@ -269,7 +269,7 @@ def accept():
         db = utils.get_db()
     except:
         utils.remove_handlers() 
-     # args
+    # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     epsg = args.get("epsg")

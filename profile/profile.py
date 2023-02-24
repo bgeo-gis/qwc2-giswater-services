@@ -14,7 +14,7 @@ profile_bp = Blueprint('profile', __name__)
 
 @profile_bp.route('/getdialog', methods=['GET'])
 @optional_auth
-def getdialog(self):
+def getdialog():
     """Submit query
 
     Returns profiletool dialog.
@@ -177,7 +177,12 @@ def profilesvg():
         _, file_extension = os.path.splitext(img_path)
         if (file_extension == ".svg"):
             print("deleting")
-            os.remove(img_path)
+            try:
+                #os.remove(img_path)
+                return utils.create_response(status=True,do_jsonify=True)
+            except:
+                return utils.create_response(status=False,do_jsonify=True)
+        
     else:
         try:
             db = utils.get_db()
