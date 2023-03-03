@@ -1,6 +1,7 @@
 from typing import Optional, List
 from datetime import date
 from flask import jsonify
+from sqlalchemy import text, exc
 
 from qwc_services_core.runtime_config import RuntimeConfig
 from qwc_services_core.database import DatabaseEngine
@@ -8,6 +9,8 @@ from qwc_services_core.auth import get_identity
 
 import os
 import logging
+import json
+import traceback
 
 
 app = None
@@ -76,6 +79,37 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
     if do_jsonify:
             response = jsonify(response)
     return response
+
+
+def execute_procedure(log, theme, function_name, parameters=None):
+    """ Manage execution database function
+    :param function_name: Name of function to call (text)
+    :param parameters: Parameters for function (json) or (query parameters)
+    :param log_sql: Show query in qgis log (bool)
+    :return: Response of the function executed (json)
+    """
+
+    # Manage schema_name and parameters
+    schema_name = get_schema_from_theme(theme, get_config())
+    sql = f"SELECT {schema_name}.{function_name}("
+    if parameters:
+        sql += f"{parameters}"
+    sql += f");"
+
+    db = get_db(theme)
+    with db.begin() as conn:
+        result = dict()
+        try:
+            conn.execute(text(f"SET ROLE {get_identity()};"))
+            result = conn.execute(text(sql)).fetchone()[0]
+        except exc.ProgrammingError as e:
+            log.warning(" Server execution failed")
+            print(f"Server execution failed\n{traceback.format_exc()}")
+            remove_handlers()
+            return create_response(status=False, message=e, do_jsonify=True)
+        log.info(f" Server response -> {json.dumps(result)}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
+        return result
 
 
 def get_config() -> RuntimeConfig:
