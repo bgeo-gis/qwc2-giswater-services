@@ -18,24 +18,31 @@ visit_bp = Blueprint('visit', __name__)
 def getvisit():
     config = utils.get_config()
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
-    visit_type = args.get("visit_type")
-    visit_id = args.get("visit_id")
-    featureType = args.get("featureType")
-    feature_id = args.get("id")
+    visitType = args.get("visitType")
+    visitId = args.get("visitId") # nomes si obrim des del manager
+    #featureType = args.get("featureType")
+    #feature_id = args.get("id")
+    epsg = request.args.get("epsg")
+    xcoord = request.args.get("xcoord")
+    ycoord = request.args.get("ycoord")
+    zoomRatio = request.args.get("zoomRatio")
+
+    try:
+        db = utils.get_db(theme)
+    except:
+        utils.remove_handlers()
 
     schema = utils.get_schema_from_theme(theme, config)
 
-    form = f'"visit_id": {visit_id}, "visit_type": {visit_type}'
-    feature = f'"featureType": "{featureType}", "id": {feature_id}'
-    body = utils.create_body(form=form, feature=feature)
+    form = f'"visitType": {visitType}'
+    if visitId is not None:
+        feature += f', "visitId": {visitId}'
+    extras = f'"coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}}}'
+    body = utils.create_body(project_epsg=epsg, form=form, extras=extras)
     sql = f"SELECT {schema}.gw_fct_getvisit({body});"
 
     log.info(f" Server execution -> {sql}")
@@ -52,6 +59,97 @@ def getvisit():
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
     utils.remove_handlers()
     return handle_db_result(result)
+
+
+@visit_bp.route('/set', methods=['POST'])
+@optional_auth
+def setvisit():
+    """Submit query
+
+    Returns additional information at clicked map position.
+    """
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.form
+    theme = args.get("theme")
+    visitId = args.get("visitId")
+    fields = args.get("fields")
+    # files
+    files = request.files.getlist('files[]') if request.files else []
+
+    try:
+        db = utils.get_db(theme)
+    except:
+        utils.remove_handlers()
+
+    schema = utils.get_schema_from_theme(theme, config)
+
+    if schema is None:
+        log.warning(" Schema is None")
+        utils.remove_handlers()
+        return jsonify({"schema": schema})
+
+    log.info(f" Selected schema {str(schema)}")
+
+    feature = ''
+    if visitId is not None:
+        feature += f'"visitId": {visitId}'
+    print(f"{theme=}")
+    print(f"{visitId=}")
+    print(f"{fields=}")
+    extras = f'"fields": {fields}'
+    body = utils.create_body(feature=feature, extras=extras)
+    sql = f"SELECT {schema}.gw_fct_setvisit({body});"
+    log.info(f" Server execution -> {sql}")
+    print(f"SERVER EXECUTION: {sql}\n")
+    return utils.create_response(status=False, do_jsonify=True)
+    with db.begin() as conn:
+        result = dict()
+        try:
+            result = conn.execute(text(sql)).fetchone()[0]
+        except exc.ProgrammingError:
+            log.warning(" Server execution failed")
+            print(f"Server execution failed\n{traceback.format_exc()}")
+            utils.remove_handlers()
+        log.info(f" Server response -> {json.dumps(result)}")
+        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
+        utils.remove_handlers()
+        return handle_db_result(result, theme)
+
+    status = "Failed"
+    message = ""
+    try:
+        for file in files:
+            if not file or file.filename == '':
+                continue
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(config.get('images_path'), filename))
+            status = "Accepted"
+            message = "File uploaded successfully!"
+
+            # Insert url to om_visit_photo
+            sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, '{config.get('images_url')}{filename}');"
+
+            log.info(f" Server execution -> {sql}")
+            print(f"SERVER EXECUTION: {sql}\n")
+            try:
+                db.execute(sql)
+            except exc.ProgrammingError:
+                log.warning(" Server execution failed")
+                print(f"Server execution failed\n{traceback.format_exc()}")
+                utils.remove_handlers()
+
+            utils.remove_handlers()
+    except Exception as e:
+        status = "Failed"
+        message = "Error"
+        print(e)
+    finally:
+        utils.remove_handlers()
+        return utils.create_response(status=status, message=message, do_jsonify=True)
+
 
 
 @visit_bp.route('/file', methods=['POST'])
