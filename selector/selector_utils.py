@@ -4,33 +4,6 @@ import logging
 from flask import jsonify, Response
 
 
-def handle_db_result(result: dict, theme: str) -> Response:
-    response = {}
-    if not result:
-        logging.warning(" DB returned null")
-        return jsonify({"message": "DB returned null"})
-    if 'results' not in result or result['results'] > 0:
-        form_xml = create_xml_form_v3(result)
-        layer_columns = {}
-        db_layers = utils.get_db_layers(theme)
-        
-        for k, v in db_layers.items():
-            if v in result['body']['data']['layerColumns']:
-                layer_columns[k] = result['body']['data']['layerColumns'][v]
-
-        response = {
-            "feature": {},
-            "data": {
-                "userValues": result['body']['data']['userValues'],
-                "geometry": result['body']['data']['geometry'],
-                "layerColumns": layer_columns
-            },
-            "form": result['body']['form'],
-            "form_xml": form_xml
-        }
-    return jsonify(response)
-
-
 def create_xml_form_v3(db_result: dict) -> str:
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'
@@ -49,7 +22,7 @@ def create_xml_form_v3(db_result: dict) -> str:
         form_xml += f'<string>{tab["tabLabel"]}</string>'
         form_xml += '</attribute>'
 
-        tab_xml = set_tab_xml(tab["fields"], tab["tabName"], tab["manageAll"])
+        tab_xml = set_tab_xml(tab["fields"], tab["tabName"], tab["manageAll"], tab["selectorType"])
 
         form_xml += f'<layout class="QGridLayout" name="lyt_{tab["tabName"]}">'
         form_xml += tab_xml
@@ -66,7 +39,7 @@ def create_xml_form_v3(db_result: dict) -> str:
     return form_xml
 
 
-def set_tab_xml(fields, tab_name, manage_all):
+def set_tab_xml(fields, tab_name, manage_all, selector_type):
 
     xml = ''
     chk_all_xml = ''
@@ -103,7 +76,7 @@ def set_tab_xml(fields, tab_name, manage_all):
             tab_xml += f'</property>'
             # Action setselectors
             tab_xml += f'<property name="action">'
-            tab_xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "id": "{widget_name}", "value": "{value}"}}}}</string>'
+            tab_xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "selectorType": "{selector_type}", "id": "{widget_name}", "value": "{value}"}}}}</string>'
             tab_xml += f'</property>'
         elif widget_type == "datetime":
             tab_xml += f'<widget class="QDateTimeEdit" name="{widget_name}">'
