@@ -25,11 +25,11 @@ def create_body(project_epsg=None, form='', feature='', filter_fields='', extras
     info_type = 1
     lang = "es_ES"  # TODO: get from app lang
 
-    client = f'$${{"client":{{"device":5, "lang":"{lang}", "cur_user": "{str(get_identity())}"'
+    client = f'$${{"client":{{"device": 5, "lang": "{lang}", "cur_user": "{str(get_identity())}"'
     if info_type is not None:
-        client += f', "infoType":{info_type}'
+        client += f', "infoType": {info_type}'
     if project_epsg is not None:
-        client += f', "epsg":{project_epsg}'
+        client += f', "epsg": {project_epsg}'
     client += f'}}, '
 
     form = f'"form":{{{form}}}, '
@@ -91,6 +91,10 @@ def execute_procedure(log, theme, function_name, parameters=None):
 
     # Manage schema_name and parameters
     schema_name = get_schema_from_theme(theme, get_config())
+    if schema_name is None:
+        log.warning(" Schema is None")
+        remove_handlers()
+        return create_response(status=False, message=f"Schema for theme '{theme}' not found")
     sql = f"SELECT {schema_name}.{function_name}("
     if parameters:
         sql += f"{parameters}"

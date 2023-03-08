@@ -1,7 +1,7 @@
 import utils
 import json
 import traceback
-from .mincut_utils import handle_db_result, handle_db_result_mincutmanager
+from .mincut_utils import mincut_create_xml_form, mincutmanager_create_xml_form
 
 from flask import Blueprint, request, jsonify
 from qwc_services_core.auth import optional_auth, get_identity
@@ -13,262 +13,132 @@ mincut_bp = Blueprint('mincut', __name__)
 @mincut_bp.route('/setmincut', methods=['GET', 'POST'])
 @optional_auth
 def setmincut():
-    """Submit query
+    """Set mincut
 
-    Returns additional information at clicked map position.
+    Calls gw_fct_setmincut.
     """
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    identity = get_identity()
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
-    theme = request.args.get("theme")
-    epsg = request.args.get("epsg")
-    action = request.args.get("action")
-    xcoord = request.args.get("xcoord")
-    ycoord = request.args.get("ycoord")
-    zoomRatio = request.args.get("zoomRatio")
-    mincutId = request.args.get("mincutId")
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    epsg = args.get("epsg")
+    action = args.get("action")
+    xcoord = args.get("xcoord")
+    ycoord = args.get("ycoord")
+    zoomRatio = args.get("zoomRatio")
+    mincutId = args.get("mincutId")
 
-    schema = utils.get_schema_from_theme(theme, config)
-
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
-
-    log.info(f" Selected schema {str(schema)}")
-
-    req =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(epsg), "cur_user": str(identity)
-        }, 
-        "form": {}, 
-        "feature": {},
-        "data": {
-            "filterFields": {},
-            "pageInfo": {},
-            "action": str(action),
-            "coordinates": {
-                "epsg": int(epsg), 
-                "xcoord": xcoord, 
-                "ycoord": ycoord, 
-                "zoomRatio": zoomRatio
-            },
-            "usePsectors": "False"
-        }
-    }
+    # db fct
+    coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
+    extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
     if mincutId is not None:
-        req["data"]["mincutId"] = mincutId
-    request_json = json.dumps(req)
-    sql = f"SELECT {schema}.gw_fct_setmincut($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
-        return handle_db_result(result, theme)
+        extras = f', "mincutId": {mincutId}'
+    body = utils.create_body(project_epsg=epsg, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
+
+    # form xml
+    try:
+        form_xml = mincut_create_xml_form(result)
+    except:
+        form_xml = None
+
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+
 
 @mincut_bp.route('/open', methods=['GET'])
 @optional_auth
 def openmincut():
-    """Submit query
+    """Open mincut
 
-    Returns additional information at clicked map position.
+    Returns dialog of a wanted mincut.
     """
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     mincut_id = args.get("mincutId")
 
-    schema = utils.get_schema_from_theme(theme, config)
+    # db fct
+    extras = f'"mincutId": {mincut_id}'
+    body = utils.create_body(extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getmincut_ff', body)
 
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
+    # form xml
+    try:
+        form_xml = mincut_create_xml_form(result)
+    except:
+        form_xml = None
 
-    log.info(f" Selected schema {str(schema)}")
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
-    req =  {
-            "client": {
-                "device": 5, "lang": "en_US"
-            }, 
-            "data": {
-                "mincutId": mincut_id
-            }
-        }
-    request_json = json.dumps(req)
-    sql = f"SELECT {schema}.gw_fct_getmincut_ff($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
-        return handle_db_result(result, theme)
 
 @mincut_bp.route('/cancel', methods=['GET', 'POST'])
 @optional_auth
 def cancelmincut():
-    """Submit query
+    """Cancel mincut
 
-    Returns additional information at clicked map position.
+    Calls gw_fct_setmincut with action 'mincutCancel'.
     """
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    identity = get_identity()
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
-    #print(f"request args ============> {request.get_json(force=True)}")
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     mincutId = args.get("mincutId")
 
-    schema = utils.get_schema_from_theme(theme, config)
+    # db fct
+    extras = f'"action": "mincutCancel", "mincutId": {mincutId}'
+    body = utils.create_body(extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
+    # form xml
+    try:
+        form_xml = mincut_create_xml_form(result)
+    except:
+        form_xml = None
 
-    log.info(f" Selected schema {str(schema)}")
-
-    request_json =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US", "cur_user": str(identity)
-        }, 
-        "form": {}, 
-        "feature": {},
-        "data": {
-            "filterFields": {},
-            "pageInfo": {},
-            "action": "mincutCancel",
-            "mincutId": mincutId
-        }
-    }
-    request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_setmincut($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
-        return handle_db_result(result, theme)
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
 
 @mincut_bp.route('/delete', methods=['DELETE'])
 @optional_auth
 def deletemincut():
-    """Submit query
+    """Delete mincut
 
-    Returns additional information at clicked map position.
+    Deletes a mincut.
     """
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    identity = get_identity()
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     mincut_id = args.get("mincutId")
 
-    schema = utils.get_schema_from_theme(theme, config)
+    # db fct
+    extras = f'"action": "mincutDelete", "mincutId": {mincut_id}'
+    body = utils.create_body(extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
+    # form xml
+    try:
+        form_xml = mincut_create_xml_form(result)
+    except:
+        form_xml = None
 
-    log.info(f" Selected schema {str(schema)}")
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
-    req =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US", "cur_user": str(identity)
-        }, 
-        "form": {}, 
-        "feature": {},
-        "data": {
-            "filterFields": {},
-            "pageInfo": {},
-            "action": "mincutDelete",
-            "mincutId": mincut_id
-        }
-    }
-    print(req)
-    request_json = json.dumps(req)
-    sql = f"SELECT {schema}.gw_fct_setmincut($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
-        return handle_db_result(result, theme)
 
 @mincut_bp.route('/accept', methods=['POST'])
 @optional_auth
 def accept():
-    """Submit query
+    """Accept mincut
 
-    Returns additional information at clicked map position.
+    Calls gw_fct_setmincut with action 'mincutAccept'.
     """
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    identity = get_identity()
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers() 
+
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
@@ -280,113 +150,56 @@ def accept():
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
 
-    schema = utils.get_schema_from_theme(theme, config)
+    # db fct
+    feature = f'"featureType": "", "tableName": "om_mincut", "id": {mincutId}'
+    coordinates = f'"epsg": {int(epsg)}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
+    extras = f'"action": "mincutAccept", "mincutClass": 1, "status": "check", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
+             f'"fields": {json.dumps(fields)}, "coordinates": {{{coordinates}}}'
+    body = utils.create_body(feature=feature, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
+    # form xml
+    try:
+        form_xml = mincut_create_xml_form(result)
+    except:
+        form_xml = None
 
-    log.info(f" Selected schema {str(schema)}")
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
-    req =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US", "epsg": int(epsg), "cur_user": str(identity)
-        }, 
-        "form": {}, 
-        "feature": {
-            "featureType": "",
-            "tableName": "om_mincut",
-            "id": int(mincutId)
-        },
-        "data": {
-            "filterFields": {},
-            "pageInfo": {},
-            "action": "mincutAccept",
-            "mincutClass": 1,
-            "status": "check",
-            "mincutId": int(mincutId),
-            "usePsectors": usePsectors,
-            "fields": dict(fields),
-            "coordinates": {
-                "epsg": int(epsg), 
-                "xcoord": xcoord, 
-                "ycoord": ycoord, 
-                "zoomRatio": zoomRatio
-            }
-        }
-    }
-    request_json = json.dumps(req)
-    sql = f"SELECT {schema}.gw_fct_setmincut($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
-        return handle_db_result(result, theme)
 
 @mincut_bp.route('/getmincutmanager', methods=['GET'])
 @optional_auth
 def getmanager():
-    """Submit query
+    """Get mincut manager
 
-    Returns additional information at clicked map position.
+    Returns mincut manager dialog.
     """
-    print("hola")
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers()
 
     # args
     theme = request.args.get("theme")
 
-    schema = utils.get_schema_from_theme(theme, config)
-    print("theme -> ", schema)
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
+    # db fct
+    body = utils.create_body()
+    result = utils.execute_procedure(log, theme, 'gw_fct_getmincut_manager', body)
 
-    log.info(f" Selected schema {str(schema)}")
+    # form xml
+    try:
+        form_xml = mincutmanager_create_xml_form(result)
+    except:
+        form_xml = None
 
-    request_json = {}
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
-    sql = f"SELECT {schema}.gw_fct_getmincut_manager($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
-        return handle_db_result_mincutmanager(result, theme)
 
 @mincut_bp.route('/getlist', methods=['GET'])
 @optional_auth
 def getlist():
-    config = utils.get_config()
+    """Get list
+
+    Returns list of mincuts (for the manager).
+    """
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers()
 
     # args
     theme = request.args.get("theme")
@@ -396,60 +209,26 @@ def getlist():
     tableName = request.args.get("tableName")
     filterFields = request.args.get("filterFields")
 
-    schema = utils.get_schema_from_theme(theme, config)
-
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers()
-        return jsonify({"schema": schema})
-
-    request_json =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US"
-        },
-        "form": {
-            "formName": "",
-            "tabName": str(tabName),
-            "widgetname": str(widgetname),
-            "formtype": str(formtype)
-        },
-        "feature": {
-            "tableName": tableName
-        },
-        "data": {
-            "filterFields": {},
-            "pageInfo": {}
-        }
-    }
-
     # Manage filters
-    print("filterFields -> ", filterFields)
+    filterFields_dict = {}
     if filterFields in (None, "", "null", "{}"):
-        request_json["data"]["filterFields"] = {}
+        filterFields_dict = None
     else:
         filterFields = json.loads(str(filterFields))
         for k, v in filterFields.items():
             if v in (None, "", "null"):
                 continue
-            request_json["data"]["filterFields"][k] = {
+            filterFields_dict[k] = {
             #   "columnname": v["columnname"],
                 "value": v["value"],
                 "filterSign": v["filterSign"]
             }
 
-    request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_getlist($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    result = dict()
-    try:
-            result = db.execute(sql).fetchone()[0]
-    except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+    # db fct
+    form = f'"formName": "", "tabName": "{tabName}", "widgetname": "{widgetname}", "formtype": "{formtype}"'
+    feature = f'"tableName": "{tableName}"'
+    filter_fields = json.dumps(filterFields_dict) if filterFields_dict else ''
+    body = utils.create_body(form=form, feature=feature, filter_fields=filter_fields)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getlist', body)
 
-    log.info(f" Server response {str(result)[0:100]}")
-    print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
-    return jsonify(result)
+    return utils.create_response(result, do_jsonify=True)
