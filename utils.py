@@ -103,6 +103,8 @@ def execute_procedure(log, theme, function_name, parameters=None):
     db = get_db(theme)
     with db.begin() as conn:
         result = dict()
+        log.info(f" Server execution -> {sql}")
+        print(f"SERVER EXECUTION: {sql}\n")
         try:
             conn.execute(text(f"SET ROLE {get_identity()};"))
             result = conn.execute(text(sql)).fetchone()[0]
