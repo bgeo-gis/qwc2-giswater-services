@@ -33,7 +33,7 @@ def setmincut():
     coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
     extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
     if mincutId is not None:
-        extras = f', "mincutId": {mincutId}'
+        extras += f', "mincutId": {mincutId}'
     body = utils.create_body(project_epsg=epsg, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
