@@ -43,6 +43,8 @@ def setmincut():
     except:
         form_xml = None
 
+    utils.remove_handlers(log)
+
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
 
@@ -70,6 +72,8 @@ def openmincut():
         form_xml = mincut_create_xml_form(result)
     except:
         form_xml = None
+
+    utils.remove_handlers(log)
 
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
@@ -99,6 +103,8 @@ def cancelmincut():
     except:
         form_xml = None
 
+    utils.remove_handlers(log)
+
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
 
@@ -126,6 +132,8 @@ def deletemincut():
         form_xml = mincut_create_xml_form(result)
     except:
         form_xml = None
+
+    utils.remove_handlers(log)
 
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
@@ -164,6 +172,8 @@ def accept():
     except:
         form_xml = None
 
+    utils.remove_handlers(log)
+
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
 
@@ -188,6 +198,8 @@ def getmanager():
         form_xml = mincutmanager_create_xml_form(result)
     except:
         form_xml = None
+
+    utils.remove_handlers(log)
 
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
@@ -230,5 +242,7 @@ def getlist():
     filter_fields = json.dumps(filterFields_dict) if filterFields_dict else ''
     body = utils.create_body(form=form, feature=feature, filter_fields=filter_fields)
     result = utils.execute_procedure(log, theme, 'gw_fct_getlist', body)
+
+    utils.remove_handlers(log)
 
     return utils.create_response(result, do_jsonify=True)

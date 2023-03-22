@@ -18,6 +18,8 @@ def dialog():
 
     Returns dateselector dialog.
     """
+    log = utils.create_log(__name__)
+
     # Get dialog
     form_xml = get_dateselector_ui()
 
@@ -27,7 +29,7 @@ def dialog():
         "data": {},
         "form_xml": form_xml
     }
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return jsonify(response)
 
 
@@ -46,7 +48,7 @@ def dates():
     try:
         db = utils.get_db()
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
@@ -96,8 +98,8 @@ def dates():
         except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+            utils.remove_handlers(log)
         log.info(f" Server response -> {json.dumps(result)}")
         print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return handle_db_result(result, theme)

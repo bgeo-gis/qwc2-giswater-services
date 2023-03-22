@@ -28,6 +28,8 @@ def upstream():
     body = utils.create_body(extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_graphanalytics_upstream', body)
 
+    utils.remove_handlers(log)
+
     return utils.create_response(result, do_jsonify=True)
 
 
@@ -52,5 +54,7 @@ def downstream():
     extras = f'"coordinates": {{{coordinates}}}'
     body = utils.create_body(extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_graphanalytics_downstream', body)
+
+    utils.remove_handlers(log)
 
     return utils.create_response(result, do_jsonify=True)

@@ -34,7 +34,7 @@ def getvisit():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
 
@@ -53,11 +53,11 @@ def getvisit():
     except exc.ProgrammingError:
         log.warning(" Server execution failed")
         print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
             
     log.info(f" Server response {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return handle_db_result(result)
 
 
@@ -82,13 +82,13 @@ def setvisit():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
 
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema {str(schema)}")
@@ -104,6 +104,9 @@ def setvisit():
     sql = f"SELECT {schema}.gw_fct_setvisit({body});"
     log.info(f" Server execution -> {sql}")
     print(f"SERVER EXECUTION: {sql}\n")
+
+    utils.remove_handlers(log)
+
     return utils.create_response(status=False, do_jsonify=True)
     with db.begin() as conn:
         result = dict()
@@ -112,10 +115,10 @@ def setvisit():
         except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+            utils.remove_handlers(log)
         log.info(f" Server response -> {json.dumps(result)}")
         print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return handle_db_result(result, theme)
 
     status = "Failed"
@@ -139,15 +142,15 @@ def setvisit():
             except exc.ProgrammingError:
                 log.warning(" Server execution failed")
                 print(f"Server execution failed\n{traceback.format_exc()}")
-                utils.remove_handlers()
+                utils.remove_handlers(log)
 
-            utils.remove_handlers()
+            utils.remove_handlers(log)
     except Exception as e:
         status = "Failed"
         message = "Error"
         print(e)
     finally:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return utils.create_response(status=status, message=message, do_jsonify=True)
 
 
@@ -158,7 +161,7 @@ def uploadfile():
 
     if not request.files:
         print("No files")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         msg = "No files provided"
         return utils.create_response(status=False, message=msg, do_jsonify=True)
     files = request.files.getlist('files[]')
@@ -176,7 +179,7 @@ def uploadfile():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
 
@@ -202,15 +205,15 @@ def uploadfile():
                 except exc.ProgrammingError:
                     log.warning(" Server execution failed")
                     print(f"Server execution failed\n{traceback.format_exc()}")
-                    utils.remove_handlers()
+                    utils.remove_handlers(log)
 
-                utils.remove_handlers()
+                utils.remove_handlers(log)
         except Exception as e:
             status = "Failed"
             message = "Error"
             print(e)
         finally:
-            utils.remove_handlers()
+            utils.remove_handlers(log)
             return utils.create_response(status=status, message=message, do_jsonify=True)
 
 
@@ -230,13 +233,13 @@ def getlist():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
 
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     request_json =  {
@@ -283,9 +286,9 @@ def getlist():
     except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+            utils.remove_handlers(log)
 
     log.info(f" Server response {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return jsonify(result)

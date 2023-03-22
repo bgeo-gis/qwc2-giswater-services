@@ -19,6 +19,8 @@ def getdialog():
 
     Returns profiletool dialog.
     """
+    log = utils.create_log(__name__)
+
     # Get dialog
     form_xml = get_profiletool_ui()
 
@@ -27,7 +29,7 @@ def getdialog():
         "feature": {},
         "form_xml": form_xml
     }
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return jsonify(response)
 
 
@@ -44,7 +46,7 @@ def nodefromcoordinates():
     try:
         db = utils.get_db()
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
@@ -60,7 +62,7 @@ def nodefromcoordinates():
     schema = utils.get_schema_from_theme(theme, config)
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema -> {str(schema)}")
@@ -97,10 +99,10 @@ def nodefromcoordinates():
         except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+            utils.remove_handlers(log)
         log.info(f" Server response: {str(result)[0:100]}")
         print(f"SERVER RESPONSE: {result}\n\n")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return handle_db_result(result)
 
 
@@ -116,7 +118,7 @@ def profileinfo():
     try:
         db = utils.get_db()
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
@@ -128,7 +130,7 @@ def profileinfo():
     schema = utils.get_schema_from_theme(theme, config)
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     request_json =  {
@@ -156,10 +158,10 @@ def profileinfo():
         except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+            utils.remove_handlers(log)
         log.info(f" Server response: {str(result)[0:100]}")
         print(f"SERVER RESPONSE: {result}\n\n")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return handle_db_result(result)
 
 

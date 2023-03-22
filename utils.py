@@ -77,7 +77,7 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
     response["form_xml"] = form_xml
 
     if do_jsonify:
-            response = jsonify(response)
+        response = jsonify(response)
     return response
 
 
@@ -189,20 +189,20 @@ def create_log(class_name):
 
     fileh = logging.FileHandler(f"{today_directory}/{log_file}", "a", encoding="utf-8")
     # Declares how log info is added to the file
-    formatter = logging.Formatter("%(asctime)s %(levelname)s:%(message)s", datefmt = "%d/%m/%y %H:%M:%S")
+    formatter = logging.Formatter("[%(asctime)s] %(levelname)s:%(name)s:%(message)s", datefmt = "%d/%m/%y %H:%M:%S")
     fileh.setFormatter(formatter)
 
     # Removes previous handlers on root Logger
     remove_handlers()
     # Gets root Logger and add handler
-    log = logging.getLogger()
+    logger_name = f"{tenant_handler.tenant()}:{get_identity()}:{class_name.split('.')[-1]}"
+    log = logging.getLogger(logger_name)
+    # log = logging.getLogger()
     log.addHandler(fileh)
     log.setLevel(logging.DEBUG)
-    log.info(f" Executing class {class_name}")
     return log
 
 # Removes previous handlers on root Logger
-def remove_handlers():
-    log = logging.getLogger()
+def remove_handlers(log=logging.getLogger()):
     for hdlr in log.handlers[:]:
         log.removeHandler(hdlr)

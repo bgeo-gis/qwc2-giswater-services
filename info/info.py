@@ -33,13 +33,13 @@ def fromcoordinates():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
     
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema {str(schema)}")
@@ -74,11 +74,11 @@ def fromcoordinates():
     except exc.ProgrammingError:
         log.warning(" Server execution failed")
         print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
     result: dict = db.execute(sql).fetchone()[0]
     log.info(f" Server response: {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return handle_db_result(result)
 
 
@@ -97,7 +97,7 @@ def fromid():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
 
@@ -124,11 +124,11 @@ def fromid():
     except exc.ProgrammingError:
         log.warning(" Server execution failed")
         print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
             
     log.info(f" Server response {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return handle_db_result(result)
 
 
@@ -205,11 +205,11 @@ def getlist():
     except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers()
+            utils.remove_handlers(log)
 
     log.info(f" Server response {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return jsonify(result)
 
 
@@ -231,7 +231,7 @@ def getgraph():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers() 
+        utils.remove_handlers(log) 
 
     schema = utils.get_schema_from_theme(theme, config)
 
@@ -239,7 +239,7 @@ def getgraph():
     # print(f"schema -> {schema}")
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema -> {str(schema)}")
@@ -268,11 +268,11 @@ def getgraph():
     except exc.ProgrammingError:
         log.warning(" Server execution failed")
         print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     log.info(f" Server response {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return jsonify(result)
 
 
@@ -298,14 +298,14 @@ def getdma():
     try:
         db = utils.get_db(theme)
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
     # print(f"theme -> {args['theme']} -> {config}")
     # print(f"schema -> {schema}")
     if schema is None:
         log.warning(" Schema is None")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema -> {str(schema)}")
@@ -340,9 +340,9 @@ def getdma():
     except exc.ProgrammingError:
         log.warning(" Server execution failed")
         print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     log.info(f" Server response {str(result)[0:100]}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers()
+    utils.remove_handlers(log)
     return jsonify(result)
