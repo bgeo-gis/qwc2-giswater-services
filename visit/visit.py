@@ -50,7 +50,7 @@ def getvisit():
     if visitId is not None:
         feature += f', "visitId": {visitId}'
     extras = f'"coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}}}'
-    body = utils.create_body(project_epsg=epsg, form=form, extras=extras)
+    body = utils.create_body(theme, project_epsg=epsg, form=form, extras=extras)
     sql = f"SELECT {schema}.gw_fct_getvisit({body});"
 
     log.info(f" Server execution -> {sql}")
@@ -108,7 +108,7 @@ def setvisit():
     print(f"{visitId=}")
     print(f"{fields=}")
     extras = f'"fields": {fields}'
-    body = utils.create_body(feature=feature, extras=extras)
+    body = utils.create_body(theme, feature=feature, extras=extras)
     sql = f"SELECT {schema}.gw_fct_setvisit({body});"
     log.info(f" Server execution -> {sql}")
     print(f"SERVER EXECUTION: {sql}\n")
