@@ -11,44 +11,23 @@ from flask import jsonify, Response
 import logging
 import json
 
-def handle_db_result(result: dict, theme: str) -> Response:
-    response = {}
-    if not result:
-        logging.warning(" DB returned null")
-        return jsonify({"message": "DB returned null"})
-    if 'results' not in result or result['results'] > 0:
-        try:
-            form_xml = mincut_create_xml_form(result)
-        except:
-            form_xml = None
-
-        response = {
-            "status": result['status'],
-            "version": result['version'],
-            "body": result['body'],
-            "form_xml": form_xml
-        }
-    return jsonify(response)
+import utils
+from utils import create_widget_xml
 
 
-def handle_db_result_mincutmanager(result: dict, theme: str) -> Response:
-    response = {}
-    if not result:
-        logging.warning(" DB returned null")
-        return jsonify({"message": "DB returned null"})
-    if 'results' not in result or result['results'] > 0:
-        try:
+def manage_response(result, log, theme, manager=False):
+    # form xml
+    try:
+        if manager:
             form_xml = mincutmanager_create_xml_form(result)
-        except:
-            form_xml = None
+        else:
+            form_xml = mincut_create_xml_form(result)
+    except:
+        form_xml = None
 
-        response = {
-            "status": result['status'],
-            "version": result['version'],
-            "body": result['body'],
-            "form_xml": form_xml
-        }
-    return jsonify(response)
+    utils.remove_handlers(log)
+
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
 
 
 def mincut_create_xml_form(result: dict) -> str:
@@ -59,6 +38,11 @@ def mincut_create_xml_form(result: dict) -> str:
     form_xml += '<ui version="4.0">'
     form_xml += '<widget class="QWidget" name="dlg_mincut">'
     form_xml += '<layout class="QVBoxLayout" name="MainLayout">'
+
+    # Toolbar
+    form_xml += '<item>'
+    form_xml += layout_xmls.get('lyt_toolbar', '')
+    form_xml += '</item>'
 
     # Layout top (id, state & work order)
     form_xml += '<item>'
@@ -147,7 +131,7 @@ def get_layout_xmls(result: dict) -> dict:
     for layout, fields in widgets_x_layouts.items():
         # TODO: Improve this, extract from get_layout_xmls. Maybe the <layout> tags can go in {class}_create_xml_form
         layout_class = "QGridLayout"
-        if layout in ('lyt_top_1', 'lyt_bot_1'):
+        if layout in ('lyt_top_1', 'lyt_bot_1', 'lyt_toolbar'):
             layout_class = "QHBoxLayout"
         layout_xml = f'<layout class="{layout_class}" name="{layout}">'
         for field in fields:
@@ -157,142 +141,6 @@ def get_layout_xmls(result: dict) -> dict:
 
     return layout_xmls
 
-
-def create_widget_xml(field: dict) -> str:
-    xml = ''
-    if field.get('hidden') in (True, 'True', 'true'):
-        return xml
-    row = field["web_layoutorder"]
-    if row is None:
-        return xml
-    value = ""
-    if "value" in field:
-        value = field["value"]
-
-    widget_type = field['widgettype']
-    widget_name = field["column_id"]
-    widgetcontrols = field.get('widgetcontrols', {})
-    if not widgetcontrols:
-        widgetcontrols = {}
-    widgetfunction = field.get('widgetfunction', {})
-    if not widgetfunction:
-        widgetfunction = {}
-    # print(f"{field['layoutname']}")
-    # print(f"          {widget_name} -> {row}")
-
-    xml = ''
-    read_only = "false"
-    if 'iseditable' in field:
-        read_only = str(not field['iseditable']).lower()
-
-    if field["label"] in (None, 'None', ''):
-        xml += f'<item row="{row}" column="0" colspan="2">'
-    elif widget_type == "tableview":
-        xml += f'<item row="{row+1}" column="0" colspan="2">'
-    else:
-        xml += f'<item row="{row}" column="0">'
-        xml += '<widget class="QLabel" name="label">'
-        xml += '<property name="text">'
-        xml += f'<string>{field["label"]}</string>'
-        xml += '</property>'
-        xml += '</widget>'
-        xml += '</item>'
-        xml += f'<item row="{row}" column="1">'
-
-    if widget_type == "check":
-        xml += f'<widget class="QCheckBox" name="{widget_name}">'
-        xml += f'<property name="checked">'
-        xml += f'<bool>{value}</bool>'
-        xml += f'</property>'
-    elif widget_type == "datetime":
-        widget_class = "QDateTimeEdit"
-        if field.get("datatype") == 'date':
-            widget_class = "QDateEdit"
-        xml += f'<widget class="{widget_class}" name="{widget_name}">'
-        xml += f'<property name="value">'
-        xml += f'<string>{value}</string>'
-        xml += f'</property>'
-    elif widget_type == "combo":
-        xml += f'<widget class="QComboBox" name="{widget_name}">'
-        if field["isNullValue"] is True:
-            field["comboIds"].insert(0, '')
-            field["comboNames"].insert(0, '')
-        options = dict(zip(field["comboIds"], field["comboNames"]))
-        # print(options)
-        try:
-            value = options[field["selectedId"]]
-        except KeyError:
-            value = list(options.values())[0]
-
-        for key, val in options.items():
-            xml += '<item>'
-            xml += '<property name="value">'
-            xml += f'<string>{key}</string>'
-            xml += '</property>'
-            xml += '<property name="text">'
-            xml += f'<string>{val}</string>'
-            xml += '</property>'
-            xml += '</item>'
-        xml += f'<property name="value">'
-        xml += f'<string>{value}</string>'
-        xml += f'</property>'
-    elif widget_type == "button":
-        xml += f'<widget class="QPushButton" name="{widget_name}">'
-        xml += f'<property name="text">'
-        xml += f'<string>{value}</string>'
-        xml += f'</property>'
-        if (widgetfunction.get("functionName") == "get_info_node"):
-            xml += f'<property name="action">'
-            xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
-            xml += f'</property>'
-    elif widget_type == "tableview":
-        # QTableWidget
-        xml += f'<widget class="QTableWidget" name="{widget_name}">'
-        xml += f'<property name="linkedobject">'
-        xml += f'<string>tbl_visit_x_node</string>'
-        xml += f'</property>'
-        xml += f'<property name="action">'
-        xml += f'<string>{{"name": "getlist", "params": {{"tabName": "visit", "widgetname": "{widget_name}", "tableName": "tbl_visit_x_node", "idName": "node_id", "id": "1000"}}}}</string>'
-        xml += f'</property>'
-        # xml += f'<property name="text">'
-        # xml += f'<string>{value}</string>'
-        # xml += f'</property>'
-        # if (widgetfunction.get("functionName") == "get_info_node"):
-        #     xml += f'<property name="action">'
-        #     xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
-        #     xml += f'</property>'
-    elif widget_type == "spinbox":
-        xml += f'<widget class="QSpinBox" name="{widget_name}">'
-        # xml += f'<property name="value">'
-        # xml += f'<number>0</number>'
-        # xml += f'<number></number>'
-        # xml += '</property>'
-    elif widget_type == "textarea":
-        xml += f'<widget class="QTextEdit" name="{widget_name}">'
-        xml += f'<property name="text">'
-        xml += f'<string>{value}</string>'
-        xml += '</property>'
-    else:
-        xml += f'<widget class="QLineEdit" name="{widget_name}">'
-        xml += f'<property name="text">'
-        xml += f'<string>{value}</string>'
-        xml += '</property>'
-
-    xml += f'<property name="readOnly">'
-    xml += f'<bool>{read_only}</bool>'
-    xml += '</property>'
-    widgetcontrols = json.dumps(widgetcontrols).replace('<', '$lt').replace('>', '$gt')
-    xml += f'<property name="widgetcontrols">'
-    xml += f'<string>{widgetcontrols}</string>'
-    xml += '</property>'
-    widgetfunction = json.dumps(widgetfunction).replace('<', '$lt').replace('>', '$gt')
-    xml += f'<property name="widgetfunction">'
-    xml += f'<string>{widgetfunction}</string>'
-    xml += '</property>'
-    xml += '</widget>'
-    xml += '</item>\n'
-
-    return xml
 
 def mincutmanager_create_xml_form(result: dict) -> str:
     layout_xmls = mincutmanager_get_layout_xmls(result)

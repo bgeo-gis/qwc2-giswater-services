@@ -7,7 +7,7 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-from .info_utils import handle_db_result
+from .info_utils import create_xml_form, handle_db_result
 
 import json
 import traceback
@@ -38,56 +38,24 @@ def fromcoordinates():
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
 
-    try:
-        db = utils.get_db(theme)
-    except:
-        utils.remove_handlers(log)
-
-    schema = utils.get_schema_from_theme(theme, config)
-    
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers(log)
-        return jsonify({"schema": schema})
-
-    log.info(f" Selected schema {str(schema)}")
-
     layers = utils.parse_layers(layers, config, theme)
 
-    request_json =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US"
-        }, 
-        "form": {
-            "editable": "False"
-        }, 
-        "data": {
-            "activeLayer": layers[0],
-            "visibleLayer": layers,
-            "coordinates": {
-                "epsg": int(epsg),
-                "xcoord": float(xcoord),
-                "ycoord": float(ycoord),
-                "zoomRatio": float(zoomRatio),
-            }
-        }
-    }
-    request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_getinfofromcoordinates($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    result = dict()
+    # db fct
+    form = f'"editable": "False"'
+    coordinates = f'"epsg": {int(epsg)}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
+    extras = f'"activeLayer": "{layers[0]}", "visibleLayers": {json.dumps(layers)}, "coordinates": {{{coordinates}}}'
+    body = utils.create_body(theme, form=form, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getinfofromcoordinates', body)
+
+    # form xml
     try:
-        result = db.execute(sql).fetchone()[0]
-    except exc.ProgrammingError:
-        log.warning(" Server execution failed")
-        print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers(log)
-    result: dict = db.execute(sql).fetchone()[0]
-    log.info(f" Server response: {str(result)[0:100]}")
-    print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
+        form_xml = create_xml_form(result)
+    except:
+        form_xml = None
+
     utils.remove_handlers(log)
-    return handle_db_result(result)
+
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
 
 
 @info_bp.route('/fromid', methods=['GET'])
@@ -102,42 +70,21 @@ def fromid():
     tableName = args.get("tableName")
     feature_id = args.get("id")
 
+    # db fct
+    form = f'"editable": "False"'
+    feature = f'"tableName": "{tableName}", "id": "{feature_id}"'
+    body = utils.create_body(theme, form=form, feature=feature)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getinfofromid', body)
+
+    # form xml
     try:
-        db = utils.get_db(theme)
+        form_xml = create_xml_form(result)
     except:
-        utils.remove_handlers(log)
+        form_xml = None
 
-    schema = utils.get_schema_from_theme(theme, config)
-
-    request_json =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US"
-        }, 
-        "form": {
-            "editable": "False"
-        }, 
-        "feature": {
-            "tableName": tableName,
-            "id": feature_id
-        },
-        "data": {}
-    }
-    request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_getinfofromid($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    result = dict()
-    try:
-        result = db.execute(sql).fetchone()[0]
-    except exc.ProgrammingError:
-        log.warning(" Server execution failed")
-        print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers(log)
-            
-    log.info(f" Server response {str(result)[0:100]}")
-    print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
     utils.remove_handlers(log)
-    return handle_db_result(result)
+
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
 
 
 @info_bp.route('/getlist', methods=['GET'])
@@ -148,7 +95,7 @@ def getlist():
     try:
         db = utils.get_db()
     except:
-        utils.remove_handlers()
+        utils.remove_handlers(log)
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
@@ -208,14 +155,16 @@ def getlist():
     log.info(f" Server execution -> {sql}")
     print(f"SERVER EXECUTION: {sql}\n")
     result = dict()
-    try:
-            result = db.execute(sql).fetchone()[0]
-    except exc.ProgrammingError:
+    with db.begin() as conn:
+        try:
+            conn.execute(f"SET ROLE {get_identity()};")
+            result = conn.execute(sql).fetchone()[0]
+        except exc.ProgrammingError:
             log.warning(" Server execution failed")
             print(f"Server execution failed\n{traceback.format_exc()}")
             utils.remove_handlers(log)
 
-    log.info(f" Server response {str(result)[0:100]}")
+    log.info(f" Server response -> {json.dumps(result)}")
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
     utils.remove_handlers(log)
     return jsonify(result)
@@ -234,38 +183,14 @@ def getgraph():
     theme = args.get("theme")
     node_id = args.get("node_id")
 
-    config = utils.get_config()
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db(theme)
-    except:
-        utils.remove_handlers(log) 
+    feature= f'"type":"node", "id": {node_id}, "parameter":"", "interval":"","result_id":"e96"'
 
-    schema = utils.get_schema_from_theme(theme, config)
+    body = utils.create_body(theme=theme, feature=feature)
+    result = utils.execute_procedure(log, theme, 'gw_fct_gettimeseries', body)
 
-    # print(f"theme -> {args['theme']} -> {config}")
-    # print(f"schema -> {schema}")
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers(log)
-        return jsonify({"schema": schema})
+    return utils.create_response(db_result=result, do_jsonify=True, theme=theme)
 
-    log.info(f" Selected schema -> {str(schema)}")
-
-    request_json =  {
-        "client": {
-            "device": 5, "infoType":1, "lang":"ES"
-        }, 
-        "form": {}, 
-        "feature": {
-            "type":"node",
-            "id": node_id,
-            "parameter":"",
-            "interval":"",
-            "result_id":"e96"
-        },
-        "data": {}
-    }
     request_json = json.dumps(request_json)
     sql = f"SELECT {schema}.gw_fct_gettimeseries($${request_json}$$);"
     log.info(f" Server execution -> {sql}")
@@ -291,7 +216,6 @@ def getdma():
     Submit query
     Returns additional information at clicked map position.
     """
-
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
@@ -300,7 +224,7 @@ def getdma():
     xcoord = args.get("xcoord")
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
-
+ 
     config = utils.get_config()
     log = utils.create_log(__name__)
     try:
@@ -317,7 +241,7 @@ def getdma():
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema -> {str(schema)}")
-
+    
     request_json =  {
         "client": {
             "device": 5, "infoType":1, "lang":"ES"

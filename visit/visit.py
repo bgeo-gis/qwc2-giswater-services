@@ -7,7 +7,7 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-from .visit_utils import handle_db_result
+from .visit_utils import handle_db_result, manage_response
 
 import json
 import traceback
@@ -26,11 +26,12 @@ visit_bp = Blueprint('visit', __name__)
 def getvisit():
     config = utils.get_config()
     log = utils.create_log(__name__)
+    extras = None
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
-    visitType = args.get("visitType")
+    visitType = args.get("visitType", 1)
     visitId = args.get("visitId") # nomes si obrim des del manager
     #featureType = args.get("featureType")
     #feature_id = args.get("id")
@@ -38,34 +39,24 @@ def getvisit():
     xcoord = request.args.get("xcoord")
     ycoord = request.args.get("ycoord")
     zoomRatio = request.args.get("zoomRatio")
-
+    """
     try:
         db = utils.get_db(theme)
     except:
         utils.remove_handlers(log)
 
     schema = utils.get_schema_from_theme(theme, config)
-
+    """
     form = f'"visitType": {visitType}'
     if visitId is not None:
-        feature += f', "visitId": {visitId}'
-    extras = f'"coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}}}'
+        form += f',"visitId": {visitId}'
+    if xcoord is not None:
+        extras = f'"coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}}}'
     body = utils.create_body(theme, project_epsg=epsg, form=form, extras=extras)
-    sql = f"SELECT {schema}.gw_fct_getvisit({body});"
+    result = utils.execute_procedure(log, theme, 'gw_fct_getvisit', body)
 
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    result = dict()
-    try:
-        result = db.execute(sql).fetchone()[0]
-    except exc.ProgrammingError:
-        log.warning(" Server execution failed")
-        print(f"Server execution failed\n{traceback.format_exc()}")
-        utils.remove_handlers(log)
-            
-    log.info(f" Server response {str(result)[0:100]}")
-    print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
     utils.remove_handlers(log)
+
     return handle_db_result(result)
 
 
@@ -78,15 +69,27 @@ def setvisit():
     """
     config = utils.get_config()
     log = utils.create_log(__name__)
+    tenant = utils.tenant_handler.tenant()
 
     # args
     args = request.form
     theme = args.get("theme")
     visitId = args.get("visitId")
+    tableName = args.get("tableName")
     fields = args.get("fields")
+
+    print("THEME: ", theme, " VISITID: ", visitId, " tableName: ", tableName, " FIELDS: ", fields)
     # files
     files = request.files.getlist('files[]') if request.files else []
 
+    url_list = []
+
+    for filename in files:
+        url = config.get('images_url')+ str(filename.filename)
+        url_list.append(url)
+    
+    files_json = json.dumps(list(str(x) for x in url_list))
+    """
     try:
         db = utils.get_db(theme)
     except:
@@ -100,22 +103,41 @@ def setvisit():
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema {str(schema)}")
-
+    """
     feature = ''
     if visitId is not None:
         feature += f'"visitId": {visitId}'
     print(f"{theme=}")
     print(f"{visitId=}")
     print(f"{fields=}")
-    extras = f'"fields": {fields}'
+    extras = f'"fields": {fields}, "tableName" : "{tableName}", "files":{files_json}'
     body = utils.create_body(theme, feature=feature, extras=extras)
+    print("BODY-------------------------------: ", body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setvisit', body)
+    """
     sql = f"SELECT {schema}.gw_fct_setvisit({body});"
     log.info(f" Server execution -> {sql}")
     print(f"SERVER EXECUTION: {sql}\n")
-
+    """
     utils.remove_handlers(log)
 
-    return utils.create_response(status=False, do_jsonify=True)
+    if result or result.get('status') == "Accepted":
+        try:
+            for file in files:
+                if not file or file.filename == '':
+                    continue
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(config.get('images_path'), filename))
+                status = "Accepted"
+                message = "File uploaded successfully!"
+        except Exception as e:
+            status = "Failed"
+            message = "Error"
+            print(e)
+
+
+
+    return utils.create_response(result, do_jsonify=True, theme=theme)
     with db.begin() as conn:
         result = dict()
         try:
@@ -159,8 +181,7 @@ def setvisit():
         print(e)
     finally:
         utils.remove_handlers(log)
-        return utils.create_response(status=status, message=message, do_jsonify=True)
-
+        return utils.create_response(status=status, message=message, do_jsonify=True, theme=theme)
 
 
 @visit_bp.route('/file', methods=['POST'])
@@ -199,7 +220,7 @@ def uploadfile():
                 if not file or file.filename == '':
                     continue
                 filename = secure_filename(file.filename)
-                file.save(os.path.join('/home/bgeoadmin/bgeo/images/', filename))
+                file.save(os.path.join('/home/bgeoadmin/bgeo/images/bgeo/img/', filename))
                 status = "Accepted"
                 message = "File uploaded successfully!"
 
@@ -222,81 +243,43 @@ def uploadfile():
             print(e)
         finally:
             utils.remove_handlers(log)
-            return utils.create_response(status=status, message=message, do_jsonify=True)
+            return utils.create_response(status=status, message=message, do_jsonify=True, theme=theme)
 
 
-@visit_bp.route('/getlist', methods=['GET'])
+@visit_bp.route('/getvisitmanager', methods=['GET'])
 @optional_auth
-def getlist():
+def getmanager():
+    """Get visit manager
+
+    Returns visit manager dialog.
+    """
+    log = utils.create_log(__name__)
+
     # args
     theme = request.args.get("theme")
-    tabName = request.args.get("tabName")
-    widgetname = request.args.get("widgetname")
-    formtype = request.args.get("formtype")
-    tableName = request.args.get("tableName")
-    filterFields = request.args.get("filterFields")
 
-    config = utils.get_config()
+    # db fct
+    body = utils.create_body(theme, )
+    result = utils.execute_procedure(log, theme, 'gw_fct_getvisit_manager', body)
+
+    return manage_response(result, log, manager=True)
+
+@visit_bp.route('/delete', methods=['DELETE'])
+@optional_auth
+def deletemincut():
+    """Delete visit
+
+    Deletes a visit.
+    """
     log = utils.create_log(__name__)
-    try:
-        db = utils.get_db(theme)
-    except:
-        utils.remove_handlers(log)
 
-    schema = utils.get_schema_from_theme(theme, config)
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    visitId = args.get("visitId")
+    # db fct
+    feature= f'"featureType": "visit", "tableName": "om_visit", "id": {visitId}, "idName": "id"'
+    body = utils.create_body(theme, feature=feature)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setdelete', body)
 
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers(log)
-        return jsonify({"schema": schema})
-
-    request_json =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US"
-        },
-        "form": {
-            "formName": "",
-            "tabName": str(tabName),
-            "widgetname": str(widgetname),
-            "formtype": str(formtype)
-        },
-        "feature": {
-            "tableName": tableName
-        },
-        "data": {
-            "filterFields": {},
-            "pageInfo": {}
-        }
-    }
-
-    # Manage filters
-    print("filterFields -> ", filterFields)
-    if filterFields in (None, "", "null", "{}"):
-        request_json["data"]["filterFields"] = {}
-    else:
-        filterFields = json.loads(str(filterFields))
-        for k, v in filterFields.items():
-            if v in (None, "", "null"):
-                continue
-            request_json["data"]["filterFields"][k] = {
-            #   "columnname": v["columnname"],
-                "value": v["value"],
-                "filterSign": v["filterSign"]
-            }
-
-    request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_getlist($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    result = dict()
-    try:
-            result = db.execute(sql).fetchone()[0]
-    except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers(log)
-
-    log.info(f" Server response {str(result)[0:100]}")
-    print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
-    utils.remove_handlers(log)
-    return jsonify(result)
+    return manage_response(result, log, theme)

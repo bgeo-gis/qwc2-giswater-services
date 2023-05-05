@@ -218,3 +218,153 @@ def create_log(class_name):
 def remove_handlers(log=logging.getLogger()):
     for hdlr in log.handlers[:]:
         log.removeHandler(hdlr)
+
+
+def create_widget_xml(field: dict) -> str:
+    xml = ''
+    if field.get('hidden') in (True, 'True', 'true'):
+        return xml
+    row = field.get("web_layoutorder")
+    if row is None:
+        return xml
+    value = ""
+    if "value" in field:
+        value = field["value"]
+
+    widget_type = field['widgettype']
+    widget_name = field["columnname"]
+    widgetcontrols = field.get('widgetcontrols', {})
+    if not widgetcontrols:
+        widgetcontrols = {}
+    widgetfunction = field.get('widgetfunction', {})
+    if not widgetfunction:
+        widgetfunction = {}
+    # print(f"{field['layoutname']}")
+    # print(f"          {widget_name} -> {row}")
+
+    xml = ''
+    read_only = "false"
+    if 'iseditable' in field:
+        read_only = str(not field['iseditable']).lower()
+
+    if field["label"] in (None, 'None', ''):
+        xml += f'<item row="{row}" column="0" colspan="2">'
+    elif widget_type == "tableview":
+        xml += f'<item row="{row+1}" column="0" colspan="2">'
+    else:
+        xml += f'<item row="{row}" column="0">\n'
+        xml += '<widget class="QLabel" name="label">\n'
+        xml += '<property name="text">'
+        xml += f'<string>{field["label"]}</string>'
+        xml += '</property>\n'
+        xml += '</widget>\n'
+        xml += '</item>\n'
+        xml += f'<item row="{row}" column="1">\n'
+
+    if widget_type == "check":
+        xml += f'<widget class="QCheckBox" name="{widget_name}">'
+        xml += f'<property name="checked">'
+        xml += f'<bool>{value}</bool>'
+        xml += f'</property>'
+    elif widget_type == "datetime":
+        widget_class = "QDateTimeEdit"
+        if field.get("datatype") == 'date':
+            widget_class = "QDateEdit"
+        xml += f'<widget class="{widget_class}" name="{widget_name}">'
+        xml += f'<property name="value">'
+        xml += f'<string>{value}</string>'
+        xml += f'</property>'
+    elif widget_type == "combo":
+        xml += f'<widget class="QComboBox" name="{widget_name}">'
+        if field.get("isNullValue", False) is True:
+            field["comboIds"].insert(0, '')
+            field["comboNames"].insert(0, '')
+        options = dict(zip(field["comboIds"], field["comboNames"]))
+
+        if (field.get("selectedId")):
+            value = field["selectedId"]
+        else:
+            if len(field["comboIds"]) > 0:
+                value = field["comboIds"][0]
+            else:
+                value = ''
+
+        for key, val in options.items():
+            xml += '<item>'
+            xml += '<property name="value">'
+            xml += f'<string>{key}</string>'
+            xml += '</property>'
+            xml += '<property name="text">'
+            xml += f'<string>{val}</string>'
+            xml += '</property>'
+            xml += '</item>'
+        xml += f'<property name="value">'
+        xml += f'<string>{value}</string>'
+        xml += f'</property>'
+    elif widget_type == "button":
+        xml += f'<widget class="QPushButton" name="{widget_name}">'
+        xml += f'<property name="text">'
+        xml += f'<string>{value}</string>'
+        xml += f'</property>'
+        if (widgetfunction.get("functionName") == "get_info_node"):
+            xml += f'<property name="action">'
+            xml += f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
+            xml += f'</property>'
+    elif widget_type in ("tableview", "tablewidget"):
+        if widget_type == "tableview":
+            # QTableView
+            xml += f'<widget class="QTableView" name="{widget_name}">'
+        else:
+            # QTableWidget
+            xml += f'<widget class="QTableWidget" name="{widget_name}">'
+        xml += f'<property name="linkedobject">'
+        xml += f'<string>{field.get("linkedobject")}</string>'
+        xml += f'</property>'
+    elif widget_type == "spinbox":
+        xml += f'<widget class="QSpinBox" name="{widget_name}">'
+        # xml += f'<property name="value">'
+        # xml += f'<number>0</number>'
+        # xml += f'<number></number>'
+        # xml += '</property>'
+    elif widget_type == "textarea":
+        xml += f'<widget class="QTextEdit" name="{widget_name}">'
+        xml += f'<property name="text">'
+        xml += f'<string>{value}</string>'
+        xml += '</property>'
+    elif widget_type in ("hspacer", "vspacer"):
+        xml += f'<spacer name="{widget_name}">'
+        xml += f'<property name="orientation">'
+        if widget_type == "hspacer":
+            xml += f'<enum>Qt::Horizontal</enum>'
+        else:
+            xml += f'<enum>Qt::Vertical</enum>'
+        xml += '</property>'
+    elif widget_type == "fileselector":
+        xml += f'<widget class="QgsFileWidget" name="{widget_name}">'
+        xml += f'<property name="text">'
+        xml += f'<string>{value}</string>'
+        xml += f'</property>'
+    else:
+        xml += f'<widget class="QLineEdit" name="{widget_name}">'
+        xml += f'<property name="text">'
+        xml += f'<string>{value}</string>'
+        xml += '</property>'
+
+    xml += f'<property name="readOnly">'
+    xml += f'<bool>{read_only}</bool>'
+    xml += '</property>'
+    widgetcontrols = json.dumps(widgetcontrols).replace('<', '$lt').replace('>', '$gt')
+    xml += f'<property name="widgetcontrols">'
+    xml += f'<string>{widgetcontrols}</string>'
+    xml += '</property>'
+    widgetfunction = json.dumps(widgetfunction).replace('<', '$lt').replace('>', '$gt')
+    xml += f'<property name="widgetfunction">'
+    xml += f'<string>{widgetfunction}</string>'
+    xml += '</property>'
+    if widget_type in ("hspacer", "vspacer"):
+        xml += '</spacer>'
+    else:
+        xml += '</widget>'
+    xml += '</item>\n'
+
+    return xml
