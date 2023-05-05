@@ -180,9 +180,33 @@ def accept():
     except:
         form_xml = None
 
-    utils.remove_handlers(log)
+@mincut_bp.route('/changevalvestatus', methods=['GET', 'POST'])
+@optional_auth
+def change_valve_status():
+    """Change valve status
 
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    Calls gw_fct_setchangevalvestatus.
+    """
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    epsg = args.get("epsg")
+    action = args.get("action")
+    xcoord = args.get("xcoord")
+    ycoord = args.get("ycoord")
+    zoomRatio = args.get("zoomRatio")
+    mincutId = args.get("mincutId")
+    usePsectors = args.get("usePsectors", False)
+
+    # db fct
+    coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
+    extras = f'"mincutId": "{mincutId}", "usePsectors": "{usePsectors}", "coordinates": {{{coordinates}}}'
+    body = utils.create_body(theme, project_epsg=epsg, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setchangevalvestatus', body)
+
+    return manage_response(result, log, theme)
 
 
 @mincut_bp.route('/getmincutmanager', methods=['GET'])
