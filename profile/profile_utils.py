@@ -123,7 +123,11 @@ class GwGenerateSvg:
         # Save profile with dpi = 300
         #plt.canvas.draw()
         #plt.figure(1).tight_layout()
-        plt.savefig(self.img_path, dpi=300)
+        try:
+            plt.savefig(self.img_path, dpi=300)
+        except Exception as e:
+            print(f"EXCEPTION -> {e}")
+        
 
     def _set_profile_layout(self):
         """ Set properties of main window """
