@@ -14,7 +14,7 @@ from flask import jsonify, Response
 def handle_db_result(result: dict, theme: str) -> Response:
     response = {}
     if not result:
-        response = utils.create_response(result)
+        response = utils.create_response(result, theme=theme)
         return jsonify(response)
     if 'results' not in result or result['results'] > 0:
         layer_columns = {}
@@ -24,7 +24,7 @@ def handle_db_result(result: dict, theme: str) -> Response:
             if v in result['body']['data']['layerColumns']:
                 layer_columns[k] = result['body']['data']['layerColumns'][v]
         
-        response = utils.create_response(result)
+        response = utils.create_response(result, theme=theme)
         response["body"]["data"]["layerColumns"] = layer_columns
 
     return jsonify(response)

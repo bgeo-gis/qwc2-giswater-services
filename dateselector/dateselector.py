@@ -53,12 +53,6 @@ def dates():
     # Get current dates
     config = utils.get_config()
     log = utils.create_log(__name__)
-    identity = get_identity()
-    try:
-        db = utils.get_db()
-    except:
-        utils.remove_handlers(log)
-
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
@@ -67,48 +61,19 @@ def dates():
     dateFrom = args.get("dateFrom")
     dateTo = args.get("dateTo")
 
-    schema = utils.get_schema_from_theme(theme, config)
-    if schema is None:
-        log.warning(" Schema is None")
-        return jsonify({"schema": schema})
-
-    log.info(f" Selected schema -> {str(schema)}")
-
     layers = utils.parse_layers(layers, config, theme)
-
-    request_json =  {
-        "client": {
-            "device": 5, "infoType": 1, "lang": "en_US", "cur_user": str(identity)
-        }, 
-        "form": {}, 
-        "feature": {},
-        "data": {
-            "filterFields":{},
-            "pageInfo":{},
-            "layers": layers
-        }
-    }
-
+ 
+    #extras = f'"layers": "{layers}", '
     if request.method == 'GET':
-        request_json["data"]["action"] = "GET"
+        extras =f'"action": "GET"'
+        #request_json["data"]["action"] = "GET"
     else:
-        request_json["data"]["action"] = "SET"
-        request_json["data"]["date_from"] = dateFrom
-        request_json["data"]["date_to"] = dateTo
+        #request_json["data"]["action"] = "SET"
+        #request_json["data"]["date_from"] = dateFrom
+        #request_json["data"]["date_to"] = dateTo
+        extras = f'"action": "SET", "date_from" : "{dateFrom}", "date_to" : "{dateTo}"'
+    body = utils.create_body(theme=theme, project_epsg=epsg, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_dateselector', body)
 
-    request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_dateselector($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers(log)
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers(log)
-        return handle_db_result(result, theme)
+    utils.remove_handlers(log)
+    return handle_db_result(result, theme)

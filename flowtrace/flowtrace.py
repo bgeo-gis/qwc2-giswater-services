@@ -38,7 +38,7 @@ def upstream():
 
     utils.remove_handlers(log)
 
-    return utils.create_response(result, do_jsonify=True)
+    return utils.create_response(result, do_jsonify=True, theme=theme)
 
 
 @flowtrace_bp.route('/downstream', methods=['GET'])
@@ -65,4 +65,4 @@ def downstream():
 
     utils.remove_handlers(log)
 
-    return utils.create_response(result, do_jsonify=True)
+    return utils.create_response(result, do_jsonify=True, theme=theme)

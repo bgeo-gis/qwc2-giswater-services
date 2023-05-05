@@ -37,7 +37,7 @@ def getsearch():
 
     utils.remove_handlers(log)
 
-    return utils.create_response(result, do_jsonify=True)
+    return utils.create_response(result, do_jsonify=True, theme=theme)
 
 
 @search_bp.route('/setsearch', methods=['GET', 'POST'])
@@ -61,4 +61,4 @@ def setsearch():
 
     utils.remove_handlers(log)
 
-    return utils.create_response(result, do_jsonify=True)
+    return utils.create_response(result, do_jsonify=True, theme=theme)
