@@ -7,6 +7,7 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 from flask import jsonify, Response
+import utils
 import os
 import json
 import math
@@ -104,8 +105,8 @@ class GwGenerateSvg:
 
         # If file profile.png exist overwrite
         current_time_ms = int(datetime.datetime.now().microsecond)
-        self.img_path = f"/qwc-services/qwc2-giswater-services/profile/tmp/profile_{current_time_ms}.svg"
-        #self.img_path = f"/media/qwc2/qgis-projects/bgeo/svg/profile.svg"
+        svg_path = utils.get_config().get('profile_svg_path')
+        self.img_path = f'{svg_path}profile_{current_time_ms}.svg'
         """
         if not os.path.exists(temp_folder):
             os.makedirs(temp_folder)
