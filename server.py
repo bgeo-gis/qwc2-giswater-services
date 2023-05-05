@@ -22,6 +22,8 @@ from profile.profile import profile_bp
 from dateselector.dateselector import dateselector_bp
 from visit.visit import visit_bp
 from search.search import search_bp
+from toolbox.toolbox import toolbox_bp
+from util.util import util_bp
 
 
 # Flask application
@@ -53,6 +55,8 @@ app.register_blueprint(profile_bp, url_prefix='/profile')
 app.register_blueprint(dateselector_bp, url_prefix='/dateselector')
 app.register_blueprint(visit_bp, url_prefix='/visit')
 app.register_blueprint(search_bp, url_prefix='/search')
+app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
+app.register_blueprint(util_bp, url_prefix='/util')
 
 """ readyness probe endpoint """
 @app.route("/ready", methods=['GET'])
