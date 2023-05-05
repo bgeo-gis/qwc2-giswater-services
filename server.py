@@ -8,7 +8,7 @@ or (at your option) any later version.
 
 import utils
 
-from flask import Flask, jsonify, Response
+from flask import Flask, jsonify, Response, request
 from qwc_services_core.api import Api
 from qwc_services_core.app import app_nocache
 from qwc_services_core.auth import auth_manager
@@ -25,6 +25,8 @@ from search.search import search_bp
 from toolbox.toolbox import toolbox_bp
 from util.util import util_bp
 
+import traceback
+import html
 
 # Flask application
 app = Flask(__name__)
@@ -57,6 +59,27 @@ app.register_blueprint(visit_bp, url_prefix='/visit')
 app.register_blueprint(search_bp, url_prefix='/search')
 app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
+@app.errorhandler(Exception)
+def hande_error(e: Exception):
+    print(request.url, )
+    request_str = request.url
+    request_json = request.get_json()
+    if request_json:
+        request_str += f" {request_json}"
+    # request_str = html.escape(request_str)
+    # request_str = request_str.replace("'", "\\'")
+
+    log = utils.create_log("-")
+
+    trace = traceback.format_exc()
+    trace_escaped = html.escape(trace).replace('\n', '<br>')
+
+    print(trace)
+
+    log.error(f"{request_str}|||{trace_escaped}") 
+    utils.remove_handlers(log)
+
+    return "Internal server error", 500
 
 """ readyness probe endpoint """
 @app.route("/ready", methods=['GET'])
