@@ -56,8 +56,13 @@ def create_body(theme, project_epsg=None, form='', feature='', filter_fields='',
 
     return body
 
-def create_response(db_result=None, form_xml=None, status=None, message=None, do_jsonify=False):
+def create_response(db_result=None, form_xml=None, status=None, message=None, do_jsonify=False, theme=None):
     """ Create and return a json response to send to the client """
+
+    try:
+        tiled = get_config().get("themes").get(theme).get("tiled", False)
+    except:
+        tiled = False
 
     response = {"status": "Failed", "message": {}, "version": {}, "body": {}}
 
@@ -86,6 +91,7 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
 
     if db_result:
         response = db_result
+    response["tiled"] = tiled
     response["form_xml"] = form_xml
 
     if do_jsonify:
@@ -113,19 +119,26 @@ def execute_procedure(log, theme, function_name, parameters=None):
     sql += f");"
 
     db = get_db(theme)
+    execution_msg = sql
+    response_msg = ""
+    
     with db.begin() as conn:
         result = dict()
-        log.info(f" Server execution -> {sql}")
         print(f"SERVER EXECUTION: {sql}\n")
         try:
             conn.execute(text(f"SET ROLE {get_identity()};"))
             result = conn.execute(text(sql)).fetchone()[0]
+            response_msg = json.dumps(result)
         except exc.ProgrammingError as e:
-            log.warning(" Server execution failed")
+            response_msg = traceback.format_exc()
+            log.warning(f"{execution_msg}|||{response_msg}")
             print(f"Server execution failed\n{traceback.format_exc()}")
             remove_handlers()
-            return create_response(status=False, message=e, do_jsonify=True)
-        log.info(f" Server response -> {json.dumps(result)}")
+            return create_response(status=False, message=e, do_jsonify=True, theme=theme)
+        if not result or result.get('status') == "Failed":
+            log.warning(f"{execution_msg}|||{response_msg}") 
+        else:
+            log.info(f"{execution_msg}|||{response_msg}") 
         print(f"SERVER RESPONSE: {json.dumps(result)}\n")
         return result
 
