@@ -9,7 +9,7 @@ or (at your option) any later version.
 import utils
 import json
 import traceback
-from .mincut_utils import mincut_create_xml_form, mincutmanager_create_xml_form
+from .mincut_utils import manage_response
 
 from flask import Blueprint, request, jsonify
 from qwc_services_core.auth import optional_auth, get_identity
@@ -42,18 +42,10 @@ def setmincut():
     extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
     if mincutId is not None:
         extras += f', "mincutId": {mincutId}'
-    body = utils.create_body(project_epsg=epsg, extras=extras)
+    body = utils.create_body(theme, project_epsg=epsg, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    # form xml
-    try:
-        form_xml = mincut_create_xml_form(result)
-    except:
-        form_xml = None
-
-    utils.remove_handlers(log)
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return manage_response(result, log, theme)
 
 
 @mincut_bp.route('/open', methods=['GET'])
@@ -72,18 +64,10 @@ def openmincut():
 
     # db fct
     extras = f'"mincutId": {mincut_id}'
-    body = utils.create_body(extras=extras)
+    body = utils.create_body(theme, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getmincut_ff', body)
 
-    # form xml
-    try:
-        form_xml = mincut_create_xml_form(result)
-    except:
-        form_xml = None
-
-    utils.remove_handlers(log)
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return manage_response(result, log, theme)
 
 
 @mincut_bp.route('/cancel', methods=['GET', 'POST'])
@@ -102,18 +86,10 @@ def cancelmincut():
 
     # db fct
     extras = f'"action": "mincutCancel", "mincutId": {mincutId}'
-    body = utils.create_body(extras=extras)
+    body = utils.create_body(theme, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    # form xml
-    try:
-        form_xml = mincut_create_xml_form(result)
-    except:
-        form_xml = None
-
-    utils.remove_handlers(log)
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return manage_response(result, log, theme)
 
 
 @mincut_bp.route('/delete', methods=['DELETE'])
@@ -132,18 +108,10 @@ def deletemincut():
 
     # db fct
     extras = f'"action": "mincutDelete", "mincutId": {mincut_id}'
-    body = utils.create_body(extras=extras)
+    body = utils.create_body(theme, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    # form xml
-    try:
-        form_xml = mincut_create_xml_form(result)
-    except:
-        form_xml = None
-
-    utils.remove_handlers(log)
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return manage_response(result, log, theme)
 
 
 @mincut_bp.route('/accept', methods=['POST'])
@@ -171,14 +139,11 @@ def accept():
     coordinates = f'"epsg": {int(epsg)}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
     extras = f'"action": "mincutAccept", "mincutClass": 1, "status": "check", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
              f'"fields": {json.dumps(fields)}, "coordinates": {{{coordinates}}}'
-    body = utils.create_body(feature=feature, extras=extras)
+    body = utils.create_body(theme, feature=feature, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
 
-    # form xml
-    try:
-        form_xml = mincut_create_xml_form(result)
-    except:
-        form_xml = None
+    return manage_response(result, log, theme)
+
 
 @mincut_bp.route('/changevalvestatus', methods=['GET', 'POST'])
 @optional_auth
@@ -222,18 +187,10 @@ def getmanager():
     theme = request.args.get("theme")
 
     # db fct
-    body = utils.create_body()
+    body = utils.create_body(theme, )
     result = utils.execute_procedure(log, theme, 'gw_fct_getmincut_manager', body)
 
-    # form xml
-    try:
-        form_xml = mincutmanager_create_xml_form(result)
-    except:
-        form_xml = None
-
-    utils.remove_handlers(log)
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return manage_response(result, log, theme, manager=True)
 
 
 @mincut_bp.route('/getlist', methods=['GET'])
@@ -272,9 +229,7 @@ def getlist():
     form = f'"formName": "", "tabName": "{tabName}", "widgetname": "{widgetname}", "formtype": "{formtype}"'
     feature = f'"tableName": "{tableName}"'
     filter_fields = json.dumps(filterFields_dict) if filterFields_dict else ''
-    body = utils.create_body(form=form, feature=feature, filter_fields=filter_fields)
+    body = utils.create_body(theme, form=form, feature=feature, filter_fields=filter_fields)
     result = utils.execute_procedure(log, theme, 'gw_fct_getlist', body)
 
-    utils.remove_handlers(log)
-
-    return utils.create_response(result, do_jsonify=True)
+    return manage_response(result, log, theme)
