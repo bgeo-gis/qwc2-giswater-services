@@ -7,13 +7,13 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-from .selector_utils import create_xml_form_v3
+from .selector_utils import make_response
 
 import json
 import traceback
 
-from flask import Blueprint, request, jsonify
-from qwc_services_core.auth import optional_auth, get_identity
+from flask import Blueprint, request
+from qwc_services_core.auth import optional_auth
 from sqlalchemy import text, exc
 
 selector_bp = Blueprint('selector', __name__)
@@ -26,6 +26,7 @@ def getselector():
 
     Returns selector dialog.
     """
+    config = utils.get_config()
     log = utils.create_log(__name__)
 
     # args
@@ -43,16 +44,10 @@ def getselector():
         ids = ids.split(",")
         ids_list = [int(x) for x in ids]
         extras += f', "ids": {ids_list}'
-    body = utils.create_body(project_epsg=epsg, form=form, extras=extras)
+    body = utils.create_body(theme, project_epsg=epsg, form=form, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getselectors', body)
 
-    # form xml
-    try:
-        form_xml = create_xml_form_v3(result)
-    except:
-        form_xml = None
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return make_response(result, theme, config, log)
 
 
 @selector_bp.route('/set', methods=['POST'])
@@ -62,6 +57,7 @@ def setselector():
 
     Updates selectors based on user input (and returns updated dialog).
     """
+    config = utils.get_config()
     log = utils.create_log(__name__)
     
     # args
@@ -83,13 +79,7 @@ def setselector():
     else:
         extras += f', "id": "{widget_id}", "isAlone": "{isAlone}", "disableParent": "{disableParent}", "value": "{value}"'
 
-    body = utils.create_body(project_epsg=epsg, extras=extras)
+    body = utils.create_body(theme, project_epsg=epsg, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setselectors', body)
 
-    # form xml
-    try:
-        form_xml = create_xml_form_v3(result)
-    except:
-        form_xml = None
-
-    return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
+    return make_response(result, theme, config, log)

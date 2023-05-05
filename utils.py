@@ -175,7 +175,11 @@ def parse_layers(request_layers: str, config: RuntimeConfig, theme: str) -> List
 
     for l in request_layers.split(','):
         if l in db_layers:
-            layers.append(db_layers[l])
+            db_layer = db_layers[l]
+            if isinstance(db_layer, str):
+                layers.append(db_layer)
+            elif isinstance(db_layer, list):
+                layers += db_layer
     return layers
 
 

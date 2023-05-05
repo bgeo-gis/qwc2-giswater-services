@@ -10,7 +10,33 @@ import utils
 
 import logging
 from flask import jsonify, Response
+from qwc_services_core.runtime_config import RuntimeConfig
 
+
+def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
+    theme_cfg = config.get("themes").get(theme)
+
+    if theme_cfg.get("tiled"):
+        layersVisibility = {}
+        
+        for formTab in db_result["body"]["form"]["formTabs"]:
+            if formTab["tabName"] == "tab_exploitation":
+                for field in formTab["fields"]:
+                    expl_config = theme_cfg.get("exploitations")
+                    project_layer = expl_config.get(str(field["expl_id"]))
+                    layersVisibility[project_layer] = field["value"]
+        
+        db_result["body"]["data"]["layersVisibility"] = layersVisibility
+
+    # form xml
+    try:
+        form_xml = create_xml_form_v3(db_result)
+    except:
+        form_xml = None
+
+    utils.remove_handlers(log)
+
+    return utils.create_response(db_result, form_xml=form_xml, do_jsonify=True, theme=theme)
 
 def create_xml_form_v3(db_result: dict) -> str:
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
