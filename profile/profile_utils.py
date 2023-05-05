@@ -10,6 +10,7 @@ from flask import jsonify, Response
 import os
 import json
 import math
+os.environ['MPLCONFIGDIR'] = os.getcwd() + "/.config/matplotlib"
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 from decimal import Decimal
