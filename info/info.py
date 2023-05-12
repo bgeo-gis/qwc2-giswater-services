@@ -278,3 +278,35 @@ def getdma():
     print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
     utils.remove_handlers(log)
     return jsonify(result)
+
+
+@info_bp.route('/getlayersfromcoordinates', methods=['GET'])
+@optional_auth
+def getlayersfromcoordinates():
+    """Submit query
+
+    Returns additional information at clicked map position.
+    """
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    layers = args.get("layers")
+    epsg = args.get("epsg")
+    xcoord = args.get("xcoord")
+    ycoord = args.get("ycoord")
+    zoomRatio = args.get("zoomRatio")
+
+    layers = utils.parse_layers(layers, config, theme)
+
+    # db fct
+    coordinates = f'"epsg": {int(epsg)}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
+    extras = f'"visibleLayers": {json.dumps(layers)}, "pointClickCoords": {{{coordinates}}}, "zoomScale": {zoomRatio}'
+    body = utils.create_body(theme, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getlayersfromcoordinates', body)
+
+    utils.remove_handlers(log)
+
+    return utils.create_response(result, do_jsonify=True, theme=theme)
