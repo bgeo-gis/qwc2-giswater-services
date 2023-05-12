@@ -61,3 +61,32 @@ def getlist():
     utils.remove_handlers(log)
 
     return utils.create_response(result, do_jsonify=True, theme=theme)
+
+
+@util_bp.route('/setfields', methods=['PUT'])
+@optional_auth
+def setfields():
+    """Submit query
+
+    Returns additional information at clicked map position.
+    """
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    id_ = args.get("id")
+    tableName = args.get("tableName")
+    featureType = args.get("featureType")
+    fields = args.get("fields")
+
+    # db fct
+    feature = f'"id": "{id_}", "tableName": "{tableName}", "featureType": "{featureType}"'
+    extras = f'"fields": {json.dumps(fields)}'
+    body = utils.create_body(theme, feature=feature, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setfields', body)
+
+    utils.remove_handlers(log)
+
+    return utils.create_response(result, do_jsonify=True, theme=theme)
