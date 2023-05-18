@@ -6,6 +6,7 @@ or (at your option) any later version.
 """
 # -*- coding: utf-8 -*-
 
+from typing import List, Tuple
 import json
 from flask import jsonify, Response
 from utils import create_widget_xml
@@ -87,17 +88,22 @@ def tab_onelyt_xml(fields, tab_name):
         layouts = ['lyt_visit_1', 'lyt_visit_2', 'lyt_visit_3']
     lyt_data_1 = ""
 
+    i = 1
     for field in fields:
         tabname = field.get("tabname")
         if tabname in ('document', 'element', 'relation'):
             tabname += 's'
         if tabname != tab_name.lstrip('tab_'):
             continue
+        if tab_name == "tab_data":
+            field["iseditable"] = False
+            field["web_layoutorder"] = i
 
-        # print(field)
-        # field["iseditable"] = False
-
-        lyt_data_1 += create_widget_xml(field)
+        xml = create_widget_xml(field)
+        if xml:
+            lyt_data_1 += xml
+            if tab_name == "tab_data":
+                i += 1
 
     form_xml = ""
     form_xml += f'<layout class="QHBoxLayout" name="lyt_{tab_name.lstrip("tab_")}">'

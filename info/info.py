@@ -7,7 +7,7 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-from .info_utils import create_xml_form, handle_db_result
+from .info_utils import create_xml_form
 
 import json
 import traceback
