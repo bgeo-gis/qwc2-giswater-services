@@ -37,6 +37,10 @@ def setmincut():
     zoomRatio = args.get("zoomRatio")
     mincutId = args.get("mincutId")
 
+    if xcoord is None:
+        xcoord = "null"
+        ycoord = "null"
+        
     # db fct
     coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
     extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
@@ -133,6 +137,10 @@ def accept():
     xcoord = args.get("xcoord")
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
+
+    if xcoord is None:
+        xcoord = "null"
+        ycoord = "null"
 
     # db fct
     feature = f'"featureType": "", "tableName": "om_mincut", "id": {mincutId}'
