@@ -70,12 +70,9 @@ def getprocess():
     body = utils.create_body(theme, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getprocess', body)
 
-    # print(result)
-
     utils.remove_handlers(log)
 
     return handle_process_db_result(result, parent_vals)
-    # return utils.create_response(result, do_jsonify=True, theme=theme)
 
 
 @toolbox_bp.route('/execute_process', methods=['POST'])
@@ -98,7 +95,6 @@ def execute_process():
 
     print(args)
 
-    # func_id = args.get("id")
     extras = f'"parameters": {json.dumps(params)}'
 
     feature = ''
@@ -108,9 +104,6 @@ def execute_process():
     body = utils.create_body(theme, feature=feature, extras=extras)
     result = utils.execute_procedure(log, theme, function_name, body)
 
-    # print(result)
-
     utils.remove_handlers(log)
 
     return jsonify(result)
-    # return handle_process_db_result(result)
