@@ -69,7 +69,7 @@ def openmincut():
     # db fct
     extras = f'"mincutId": {mincut_id}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_getmincut_ff', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getmincut', body)
 
     return manage_response(result, log, theme)
 
