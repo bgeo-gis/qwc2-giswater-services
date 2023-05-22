@@ -151,23 +151,10 @@ def getlist():
     }
 
     request_json = json.dumps(request_json)
-    sql = f"SELECT {schema}.gw_fct_getlist($${request_json}$$);"
-    log.info(f" Server execution -> {sql}")
-    print(f"SERVER EXECUTION: {sql}\n")
-    result = dict()
-    with db.begin() as conn:
-        try:
-            conn.execute(f"SET ROLE {get_identity()};")
-            result = conn.execute(sql).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers(log)
 
-    log.info(f" Server response -> {json.dumps(result)}")
-    print(f"SERVER RESPONSE: {json.dumps(result)}\n\n")
+    result = utils.execute_procedure(log, theme, 'gw_fct_getlist', f"$${request_json}$$")
     utils.remove_handlers(log)
-    return jsonify(result)
+    return utils.create_response(result, do_jsonify=True, theme=theme)
 
 
 @info_bp.route('/getgraph', methods=['GET'])
