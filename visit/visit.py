@@ -21,12 +21,12 @@ from sqlalchemy import text, exc
 visit_bp = Blueprint('visit', __name__)
 
 
-@visit_bp.route('/get', methods=['GET'])
+@visit_bp.route('/getvisit', methods=['GET', 'PUT'])
 @optional_auth
 def getvisit():
     config = utils.get_config()
     log = utils.create_log(__name__)
-    extras = None
+    extras = ""
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
@@ -35,23 +35,21 @@ def getvisit():
     visitId = args.get("visitId") # nomes si obrim des del manager
     #featureType = args.get("featureType")
     #feature_id = args.get("id")
-    epsg = request.args.get("epsg")
-    xcoord = request.args.get("xcoord")
-    ycoord = request.args.get("ycoord")
-    zoomRatio = request.args.get("zoomRatio")
-    """
-    try:
-        db = utils.get_db(theme)
-    except:
-        utils.remove_handlers(log)
+    epsg = args.get("epsg")
+    xcoord = args.get("xcoord")
+    ycoord = args.get("ycoord")
+    zoomRatio = args.get("zoomRatio")
+    fields = args.get("fields")
 
-    schema = utils.get_schema_from_theme(theme, config)
-    """
     form = f'"visitType": {visitType}'
     if visitId is not None:
         form += f',"visitId": {visitId}'
     if xcoord is not None:
-        extras = f'"coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}}}'
+        extras += f'"coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}}}'
+    if fields is not None:
+        if extras:
+            extras += f', '
+        extras += f'"fields": {json.dumps(fields)}'
     body = utils.create_body(theme, project_epsg=epsg, form=form, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getvisit', body)
 
@@ -60,7 +58,7 @@ def getvisit():
     return handle_db_result(result)
 
 
-@visit_bp.route('/set', methods=['POST'])
+@visit_bp.route('/setvisit', methods=['POST'])
 @optional_auth
 def setvisit():
     """Submit query
