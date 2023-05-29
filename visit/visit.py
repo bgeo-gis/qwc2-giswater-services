@@ -50,6 +50,9 @@ def getvisit():
         if extras:
             extras += f', '
         extras += f'"fields": {json.dumps(fields)}'
+    if not extras:
+        extras = None
+    
     body = utils.create_body(theme, project_epsg=epsg, form=form, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getvisit', body)
 
