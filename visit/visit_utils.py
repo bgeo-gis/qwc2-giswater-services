@@ -11,7 +11,7 @@ from flask import jsonify, Response
 import logging
 import json
 import utils
-from utils import create_widget_xml
+from utils import get_fields_per_layout, get_fields_xml_horizontal, get_fields_xml_vertical
 
 def manage_response(result, log, manager=False):
     # form xml
@@ -49,7 +49,7 @@ def handle_db_result(result: dict) -> Response:
 
 
 def visit_create_xml_form(result: dict) -> str:
-    layout_xmls = get_layout_xmls(result)
+    fields_per_layout = get_fields_per_layout(result['body']['data']['fields'])
     # tab_names = {'tab_plan': 'Plan', 'tab_exec': 'Exec', 'tab_hydro': 'Hydro', 'tab_log': 'Log'}
     tabs = result["body"]["data"]["form"].get('visibleTabs', [])
 
@@ -80,22 +80,22 @@ def visit_create_xml_form(result: dict) -> str:
         if tabname == 'tab_data':
             # Layout 1
             form_xml += '<item>'
-            form_xml += layout_xmls.get('lyt_data_1', '')
+            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_data_1"], "lyt_data_1")
             form_xml += '</item>'
 
             # Layout 2
             form_xml += '<item>'
-            form_xml += layout_xmls.get('lyt_data_2', '')
+            form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_data_2"], "lyt_data_2")
             form_xml += '</item>'
         elif tabname == 'tab_file':
             # Layout 1
             form_xml += '<item>'
-            form_xml += layout_xmls.get('lyt_files_1', '')
+            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_files_1"], "lyt_files_1")
             form_xml += '</item>'
 
             # Layout 2
             form_xml += '<item>'
-            form_xml += layout_xmls.get('lyt_files_2', '')
+            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_files_2"], "lyt_files_2")
             form_xml += '</item>'
         
         form_xml += f'</layout>'
@@ -111,31 +111,8 @@ def visit_create_xml_form(result: dict) -> str:
 
     return form_xml
 
-
-def get_layout_xmls(result: dict) -> dict:
-    widgets_x_layouts = {}
-    for field in result['body']['data']['fields']:
-        layoutname = field['layoutname']
-        if layoutname not in widgets_x_layouts:
-            widgets_x_layouts[layoutname] = []
-        widgets_x_layouts[layoutname].append(field)
-    
-    layout_xmls = {}
-    for layout, fields in widgets_x_layouts.items():
-        # TODO: Improve this, extract from get_layout_xmls. Maybe the <layout> tags can go in {class}_create_xml_form
-        layout_class = "QGridLayout"
-        if layout in ('lyt_data_2'):
-            layout_class = "QHBoxLayout"
-        layout_xml = f'<layout class="{layout_class}" name="{layout}">'
-        for field in fields:
-            layout_xml += create_widget_xml(field)
-        layout_xml += '</layout>'
-        layout_xmls[layout] = layout_xml
-
-    return layout_xmls
-
 def visitmanager_create_xml_form(result: dict) -> str:
-    layout_xmls = visitmanager_get_layout_xmls(result)
+    fields_per_layout = get_fields_per_layout(result['body']['data']['fields'])
 
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'
@@ -144,7 +121,7 @@ def visitmanager_create_xml_form(result: dict) -> str:
 
     # Layout 
     form_xml += '<item>'
-    form_xml += layout_xmls.get('lyt_visit_mng_1', '')
+    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_visit_mng_1"], "lyt_visit_mng_1")
     form_xml += '</item>'
 
     form_xml += '</layout>'
@@ -153,26 +130,5 @@ def visitmanager_create_xml_form(result: dict) -> str:
 
     return form_xml
 
-def visitmanager_get_layout_xmls(result: dict) -> dict:
-    widgets_x_layouts = {}
-    for field in result['body']['data']['fields']:
-        layoutname = field['layoutname']
-        if layoutname not in widgets_x_layouts:
-            widgets_x_layouts[layoutname] = []
-        widgets_x_layouts[layoutname].append(field)
-    
-    layout_xmls = {}
-    for layout, fields in widgets_x_layouts.items():
-        # TODO: Improve this, extract from get_layout_xmls. Maybe the <layout> tags can go in {class}_create_xml_form
-        layout_class = "QGridLayout"
-        if layout in ('lyt_visit_mng_1'):
-            layout_class = "QHBoxLayout"
-        layout_xml = f'<layout class="{layout_class}" name="{layout}">'
-        for field in fields:
-            layout_xml += create_widget_xml(field)
-        layout_xml += '</layout>'
-        layout_xmls[layout] = layout_xml
-
-    return layout_xmls
 
 

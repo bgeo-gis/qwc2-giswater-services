@@ -6,10 +6,10 @@ or (at your option) any later version.
 """
 # -*- coding: utf-8 -*-
 
-from typing import List, Tuple
+from typing import List, Tuple, Optional, Union, Callable
 import json
 from flask import jsonify, Response
-from utils import create_widget_xml
+from utils import create_widget_xml, get_fields_per_layout, get_fields_xml_vertical, filter_fields, get_layouts_per_tab
 
 def handle_db_result(result: dict) -> Response:
     response = {}
@@ -33,7 +33,8 @@ def create_xml_form(db_result: dict, simplified: bool=True) -> str:
     form_xml += '<widget class="QWidget" name="Form">'
 
     if db_result['body']['form']['template'] == "info_generic":
-        form_xml += generic_xml_form(db_result)
+        # form_xml += generic_xml_form(db_result)
+        form_xml += get_fields_xml_vertical(db_result['body']['data']['fields'], "MainLayout")
     else:
         form_xml += full_xml_form(db_result)
 
@@ -42,14 +43,26 @@ def create_xml_form(db_result: dict, simplified: bool=True) -> str:
 
     return form_xml
 
+# def generic_xml_form(db_result):
+#     form_xml = '<layout class="QGridLayout" name="MainLayout">'
+#     for field in db_result['body']['data']['fields']:
+#         form_xml += create_widget_xml(field)
+#     form_xml += '</layout>'
+
+#     return form_xml
+
 
 def full_xml_form(db_result):
+    all_fields = db_result["body"]["data"]["fields"]
+    fields_per_layout = get_fields_per_layout(all_fields)
+    layouts_per_tab = get_layouts_per_tab(all_fields)
+
     form_xml = '<layout class="QHBoxLayout" name="MainLayout">'
     form_xml += '<item>'
     form_xml += '<widget class="QTabWidget" name="tabWidget">'
     form_xml += '<property name="currentIndex">'
     form_xml += '<number>0</number>'
-    form_xml += '</property>\n'
+    form_xml += '</property>'
 
     for tab in db_result['body']['form']['visibleTabs']:
         form_xml += f'<widget class="QWidget" name="{tab["tabName"]}">'
@@ -57,9 +70,9 @@ def full_xml_form(db_result):
         form_xml += f'<string>{tab["tabLabel"]}</string>'
         form_xml += '</attribute>'
 
-        form_xml += tab_onelyt_xml(db_result["body"]["data"]["fields"], tab["tabName"])
+        form_xml += get_tab_xml(tab["tabName"], all_fields, fields_per_layout, layouts_per_tab)
 
-        form_xml += '</widget>\n'
+        form_xml += '</widget>'
 
     form_xml += '</widget>'
     form_xml += '</item>'
@@ -68,51 +81,30 @@ def full_xml_form(db_result):
     return form_xml
 
 
-def generic_xml_form(db_result):
-    form_xml = '<layout class="QGridLayout" name="MainLayout">'
-
-    for field in db_result['body']['data']['fields']:
-        form_xml += create_widget_xml(field)
-
-    form_xml += '</layout>'
-
-    return form_xml
+def get_tab_xml(tab_name: str, fields: list, fields_per_layout: dict, layouts_per_tab: dict) -> str:
+    layouts = layouts_per_tab.get(tab_name, [])
+    layout_name = f"lyt_{tab_name}"
+    if tab_name == "tab_data":      return get_combined_layout_xml(layout_name, fields_per_layout, layouts)
+    else:                           return get_generic_tab_xml(layout_name, fields_per_layout, layouts)
 
 
-def tab_onelyt_xml(fields, tab_name):
+def get_combined_layout_xml(layout_name: str, fields_per_layout: dict, layouts: list) -> str:
+    fields = []
+    for layout in layouts:
+        fields.extend(fields_per_layout.get(layout, []))
+    return get_fields_xml_vertical(fields, "lyt_name")
 
-    layouts = []
-    if tab_name == 'tab_data':
-        layouts = ['lyt_top_1', 'lyt_bot_1', 'lyt_bot_2', 'lyt_data_1', 'lyt_data_2']
-    elif tab_name == 'tab_visit':
-        layouts = ['lyt_visit_1', 'lyt_visit_2', 'lyt_visit_3']
-    lyt_data_1 = ""
 
-    i = 1
-    for field in fields:
-        tabname = field.get("tabname")
-        if tabname in ('document', 'element', 'relation'):
-            tabname += 's'
-        if tabname != tab_name.lstrip('tab_'):
-            continue
-        if tab_name == "tab_data":
-            field["iseditable"] = False
-            field["web_layoutorder"] = i
+def get_generic_tab_xml(layout_name: str, fields_per_layout: dict, layouts: list) -> str:
+    xml = f'<layout class="QVBoxLayout" name="{layout_name}">'
+    for layout in sorted(layouts):
+        fields = filter_fields(fields_per_layout[layout])
+        if len(fields) > 0:
+            xml += (
+                f'<item>'
+                 f'{get_fields_xml_vertical(fields, layout, sort=False)}'
+                f'</item>'
+            )
 
-        xml = create_widget_xml(field)
-        if xml:
-            lyt_data_1 += xml
-            if tab_name == "tab_data":
-                i += 1
-
-    form_xml = ""
-    form_xml += f'<layout class="QHBoxLayout" name="lyt_{tab_name.lstrip("tab_")}">'
-    form_xml += '  <item>'
-    form_xml += f'    <layout class="QGridLayout" name="lyt_{tab_name.lstrip("tab_")}_1">'
-    form_xml += lyt_data_1
-    form_xml += '    </layout>'
-    form_xml += '  </item>'
-    form_xml += '</layout>'
-
-    return form_xml
-
+    xml += '</layout>'
+    return xml

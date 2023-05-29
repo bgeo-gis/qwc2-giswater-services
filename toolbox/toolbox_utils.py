@@ -8,7 +8,7 @@ from flask import jsonify, Response
 import logging
 import json
 
-from utils import create_widget_xml
+from utils import get_fields_xml_vertical
 
 
 def handle_process_db_result(result: dict, parent_vals: int) -> Response:
@@ -142,14 +142,10 @@ def get_tool_parameters_xml(function: dict) -> str:
     parameters_xml = ''
 
     parameters_list = function.get("fields", [])
-    if parameters_list is None:
-        parameters_list = []
 
     for i, field in enumerate(parameters_list):
         field["web_layoutorder"] = i
         field["columnname"] = field["widgetname"]
-        parameters_xml += create_widget_xml(field)
-        # parameters_xml += create_widget_xml(i, field["widgettype"], field["widgetname"], )
 
     return f"""
 <widget class="QGroupBox" name="grb_parameters">
@@ -158,9 +154,7 @@ def get_tool_parameters_xml(function: dict) -> str:
  </property>
  <layout class="QGridLayout" name="gridLayout_3">
   <item row="0" column="0">
-   <layout class="QGridLayout" name="grl_option_parameters" rowstretch="0" columnstretch="0">
-    {parameters_xml}
-   </layout>
+   {get_fields_xml_vertical(parameters_list, "QGridLayout")}
   </item>
   <item row="1" column="0">
    <spacer name="verticalSpacer">

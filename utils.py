@@ -6,7 +6,7 @@ or (at your option) any later version.
 """
 # -*- coding: utf-8 -*-
 
-from typing import Optional, List
+from typing import Optional, List, Tuple, Dict
 from datetime import date
 from flask import jsonify
 from sqlalchemy import text, exc
@@ -159,32 +159,30 @@ def get_db(theme: str = None) -> DatabaseEngine:
     return DatabaseEngine().db_engine(db_url)
 
 def get_schema_from_theme(theme: str, config: RuntimeConfig) -> Optional[str]:
-    themes = get_config().get("themes")
-    theme = themes.get(theme)
-    if theme is not None:
-        return theme.get("schema")
+    theme_cfg = get_config().get("themes").get(theme)
+    if theme_cfg is not None:
+        return theme_cfg.get("schema")
     return None
 
 def get_db_url_from_theme(theme: str) -> Optional[str]:
-    themes = get_config().get("themes")
-    theme = themes.get(theme)
-    if theme is not None:
-        return theme.get("db_url")
+    theme_cfg = get_config().get("themes").get(theme)
+    if theme_cfg is not None:
+        return theme_cfg.get("db_url")
     return None
 
 def get_db_layers(theme: str) -> List[str]:
     db_layers = []
-    theme = get_config().get("themes").get(theme)
-    if theme is not None:
-        db_layers = theme.get("layers")
+    theme_cfg = get_config().get("themes").get(theme)
+    if theme_cfg is not None:
+        db_layers = theme_cfg.get("layers")
     return db_layers
 
 def parse_layers(request_layers: str, config: RuntimeConfig, theme: str) -> List[str]:
     layers = []
     db_layers = []
-    theme = config.get("themes").get(theme)
-    if theme is not None:
-        db_layers = theme.get("layers")
+    theme_cfg = config.get("themes").get(theme)
+    if theme_cfg is not None:
+        db_layers = theme_cfg.get("layers")
 
     for l in request_layers.split(','):
         if l in db_layers:
@@ -236,14 +234,221 @@ def remove_handlers(log=logging.getLogger()):
     for hdlr in log.handlers[:]:
         log.removeHandler(hdlr)
 
+def get_fields_per_layout(all_fields: list) -> dict:
+    fields_per_layout: Dict[str, list] = {}
+    for field in all_fields:
+        fields_per_layout.setdefault(field['layoutname'], []).append(field)
+    return fields_per_layout
+
+def get_layouts_per_tab(all_fields: list) -> dict:
+    layouts_per_tab: Dict[str, set] = {}
+    for field in all_fields:
+        layouts_per_tab.setdefault(field.get("tabname"), set()).add(field.get("layoutname"))
+    return layouts_per_tab
+
+def filter_fields(fields: list) -> list:
+    sorted_fields = sorted(fields, key=lambda f: (f["web_layoutorder"] is None, f["web_layoutorder"])) # Keep Nones at the end
+    filtered_fields = []
+    i = 0
+    for field in sorted_fields:
+        if (
+            field.get("web_layoutorder") is not None and
+            field.get("hidden") not in (True, 'True', 'true')
+        ):
+            field["web_layoutorder"] = i
+            filtered_fields.append(field)
+            i += 1
+    
+    return filtered_fields
+
+def get_fields_xml_vertical(fields: list, lyt_name: str, sort: bool = True):
+    if sort:
+        fields = filter_fields(fields)
+    form_xml = f'<layout class="QGridLayout" name="{lyt_name}">'
+    for field in fields:
+        i = field["web_layoutorder"]
+        label_xml, widget_xml = get_field_xml(field)
+        colspan = 2 if label_xml is None else 1
+        column = 0 if label_xml is None else 1
+        if label_xml is not None:
+            form_xml += (
+                f'<item row="{i}" column="0" colspan="1">'
+                 f'{label_xml}'
+                f'</item>')
+        form_xml += (
+            f'<item row="{i}" column="{column}" colspan="{colspan}">'
+             f'{widget_xml}'
+            f'</item>')
+
+    form_xml += '</layout>'
+    return form_xml
+
+def get_fields_xml_horizontal(fields: list, lyt_name: str, sort: bool = True):
+    if sort:
+        fields = filter_fields(fields)
+    form_xml = f'<layout class="QHBoxLayout" name="{lyt_name}">'
+    for field in fields:
+        label_xml, widget_xml = get_field_xml(field)
+        if label_xml is not None:
+            form_xml += (
+                f'<item>'
+                 f'{label_xml}'
+                f'</item>')
+        form_xml += (
+            f'<item>'
+             f'{widget_xml}'
+            f'</item>')
+
+    form_xml += '</layout>'
+    return form_xml
+
+def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
+    label_xml = None
+    widget_xml = None
+
+    widget_type = field['widgettype']
+    widget_name = field["columnname"]
+    value = field.get("value", "")
+
+    if field["label"] not in (None, 'None', ''):
+        label_xml = (
+            f'<widget class="QLabel" name="{widget_name}_label">'
+             f'<property name="text">'
+              f'<string>{field["label"]}</string>'
+             f'</property>'
+            f'</widget>')
+
+    widget_props_xml = ""
+    widget_class = None
+
+    read_only = str(not field.get('iseditable', True)).lower()
+    widget_props_xml += (
+        f'<property name="readOnly">'
+         f'<bool>{read_only}</bool>'
+        f'</property>')
+
+    def dict_to_str(x: dict) -> str:
+        return json.dumps(x).replace('<', '$lt').replace('>', '$gt')
+
+    widgetcontrols = field.get('widgetcontrols', {})
+    widget_props_xml += (
+        f'<property name="widgetcontrols">'
+         f'<string>{dict_to_str(widgetcontrols)}</string>'
+        f'</property>')
+    widgetfunction = field.get('widgetfunction', {})
+    widget_props_xml += (
+        f'<property name="widgetfunction">'
+         f'<string>{dict_to_str(widgetfunction)}</string>'
+        f'</property>')
+
+    if widget_type in ("hspacer", "vspacer"):
+        widget_xml = ''
+        widget_xml += f'<spacer name="{widget_name}">'
+        widget_xml += '<property name="orientation">'
+        if widget_type == "hspacer":
+            widget_xml += '<enum>Qt::Horizontal</enum>'
+        else:
+            widget_xml += '<enum>Qt::Vertical</enum>'
+        widget_xml += '</property>'
+        widget_xml += '</spacer>'
+        return label_xml, widget_xml
+    elif widget_type == "check":
+        widget_class = "QCheckBox"
+        widget_props_xml += (
+            f'<property name="checked">'
+             f'<bool>{value}</bool>'
+            f'</property>')
+    elif widget_type == "datetime":
+        widget_class = "QDateEdit" if field.get("datatype") == 'date' else "QDateTimeEdit"
+        widget_props_xml += (
+            f'<property name="value">'
+             f'<string>{value}</string>'
+            f'</property>')
+    elif widget_type == "combo":
+        widget_class = "QComboBox"
+
+        if field.get("isNullValue", False) is True:
+            field["comboIds"].insert(0, '')
+            field["comboNames"].insert(0, '')
+        options = dict(zip(field["comboIds"], field["comboNames"]))
+
+        for key, val in options.items():
+            widget_props_xml += (
+                f'<item>'
+                 f'<property name="value">'
+                  f'<string>{key}</string>'
+                 f'</property>'
+                 f'<property name="text">'
+                  f'<string>{val}</string>'
+                 f'</property>'
+                f'</item>'
+            )
+        if field.get("selectedId"):
+            value = field["selectedId"]
+        elif len(field["comboIds"]) > 0:
+            value = field["comboIds"][0]
+        else:
+            value = ''
+
+        widget_props_xml += (
+            f'<property name="value">'
+             f'<string>{value}</string>'
+            f'</property>')
+    elif widget_type == "button":
+        widget_class = "QPushButton"
+        widget_props_xml += (
+            f'<property name="text">'
+             f'<string>{value}</string>'
+            f'</property>')
+        if (widgetfunction.get("functionName") == "get_info_node"):
+            widget_props_xml += (
+                f'<property name="action">'
+                 f'<string>{{"name": "featureLink", "params": {{"id": "{value}", "tableName": "v_edit_node"}}}}</string>'
+                f'</property>')
+    elif widget_type in ("tableview", "tablewidget"):
+        widget_class = "QTableView" if widget_type == "tableview" else "QTableWidget"
+        widget_props_xml += (
+            f'<property name="linkedobject">'
+             f'<string>{field.get("linkedobject")}</string>'
+            f'</property>')
+    elif widget_type == "spinbox":
+        widget_class = "QSpinBox"
+        # xml += f'<property name="value">'
+        # xml += f'<number>0</number>'
+        # xml += f'<number></number>'
+        # xml += '</property>'
+    elif widget_type == "textarea":
+        widget_class = "QTextEdit"
+        widget_props_xml += (
+            f'<property name="text">'
+             f'<string>{value}</string>'
+            f'</property>')
+    elif widget_type == "fileselector":
+        widget_class = "QgsFileWidget"
+        widget_props_xml += (
+            f'<property name="text">'
+             f'<string>{value}</string>'
+            f'</property>')
+    else:
+        widget_class = "QLineEdit"
+        widget_props_xml += (
+            f'<property name="text">'
+             f'<string>{value}</string>'
+            f'</property>')
+
+    widget_xml = (
+        f'<widget class="{widget_class}" name="{widget_name}">'
+         f'{widget_props_xml}'
+        f'</widget>'
+    )
+    return label_xml, widget_xml
 
 def create_widget_xml(field: dict) -> str:
-    xml = ''
     if field.get('hidden') in (True, 'True', 'true'):
-        return xml
+        return ''
     row = field.get("web_layoutorder")
     if row is None:
-        return xml
+        return ''
     value = ""
     if "value" in field:
         value = field["value"]
