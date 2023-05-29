@@ -32,8 +32,8 @@ def getsearch():
     
     # db fct
     body = utils.create_body(theme, filter_fields=filterFields)
-    print("body")
-    result = utils.execute_procedure(log, theme, 'gw_fct_get_new_search', body)
+
+    result = utils.execute_procedure(log, theme, 'gw_fct_getsearch', body)
 
     utils.remove_handlers(log)
 
@@ -57,7 +57,7 @@ def setsearch():
     # db fct
     body = utils.create_body(theme, extras=extras)
     print("body: ", body)
-    result = utils.execute_procedure(log, theme, 'gw_fct_set_new_search', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setsearch', body)
 
     utils.remove_handlers(log)
 
