@@ -92,7 +92,7 @@ def get_combined_layout_xml(layout_name: str, fields_per_layout: dict, layouts: 
     fields = []
     for layout in layouts:
         fields.extend(fields_per_layout.get(layout, []))
-    return get_fields_xml_vertical(fields, "lyt_name")
+    return get_fields_xml_vertical(fields, layout_name)
 
 
 def get_generic_tab_xml(layout_name: str, fields_per_layout: dict, layouts: list) -> str:
