@@ -28,26 +28,6 @@ def manage_response(result, log, manager=False):
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True)
 
 
-def handle_db_result(result: dict) -> Response:
-    response = {}
-    if not result:
-        logging.warning(" DB returned null")
-        return jsonify({"message": "DB returned null"})
-    if 'results' not in result or result['results'] > 0:
-        try:
-            form_xml = visit_create_xml_form(result)
-        except:
-            form_xml = None
-
-        response = {
-            "status": result['status'],
-            "version": result['version'],
-            "body": result['body'],
-            "form_xml": form_xml
-        }
-    return jsonify(response)
-
-
 def visit_create_xml_form(result: dict) -> str:
     fields_per_layout = get_fields_per_layout(result['body']['data']['fields'])
     # tab_names = {'tab_plan': 'Plan', 'tab_exec': 'Exec', 'tab_hydro': 'Hydro', 'tab_log': 'Log'}

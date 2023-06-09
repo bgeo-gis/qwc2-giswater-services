@@ -7,7 +7,7 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-from .visit_utils import handle_db_result, manage_response
+from .visit_utils import manage_response
 
 import json
 import traceback
@@ -58,7 +58,7 @@ def getvisit():
 
     utils.remove_handlers(log)
 
-    return handle_db_result(result)
+    return manage_response(result, log)
 
 
 @visit_bp.route('/setvisit', methods=['POST'])
@@ -78,6 +78,9 @@ def setvisit():
     visitId = args.get("visitId")
     tableName = args.get("tableName")
     fields = args.get("fields")
+    xcoord = args.get("xcoord")
+    ycoord = args.get("ycoord")
+    epsg = args.get("epsg")
 
     print("THEME: ", theme, " VISITID: ", visitId, " tableName: ", tableName, " FIELDS: ", fields)
     # files
@@ -112,7 +115,9 @@ def setvisit():
     print(f"{visitId=}")
     print(f"{fields=}")
     extras = f'"fields": {fields}, "tableName" : "{tableName}", "files":{files_json}'
-    body = utils.create_body(theme, feature=feature, extras=extras)
+    if xcoord is not None:
+        extras += f', "coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}}}'
+    body = utils.create_body(theme, project_epsg=epsg, feature=feature, extras=extras)
     print("BODY-------------------------------: ", body)
     result = utils.execute_procedure(log, theme, 'gw_fct_setvisit', body)
     """
@@ -124,128 +129,26 @@ def setvisit():
 
     if result or result.get('status') == "Accepted":
         try:
+            images_path = config.get('images_path')
+            try:
+                os.makedirs(images_path)
+            except FileExistsError:
+                pass
+
             for file in files:
+                print("=========== FILES IN SET VISIT =========================")
                 if not file or file.filename == '':
                     continue
                 filename = secure_filename(file.filename)
-                file.save(os.path.join(config.get('images_path'), filename))
+                file.save(os.path.join(images_path, filename))
                 status = "Accepted"
                 message = "File uploaded successfully!"
         except Exception as e:
             status = "Failed"
             message = "Error"
             print(e)
-
-
 
     return utils.create_response(result, do_jsonify=True, theme=theme)
-    with db.begin() as conn:
-        result = dict()
-        try:
-            result = conn.execute(text(sql)).fetchone()[0]
-        except exc.ProgrammingError:
-            log.warning(" Server execution failed")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            utils.remove_handlers(log)
-        log.info(f" Server response -> {json.dumps(result)}")
-        print(f"SERVER RESPONSE: {json.dumps(result)}\n")
-        utils.remove_handlers(log)
-        return handle_db_result(result, theme)
-
-    status = "Failed"
-    message = ""
-    try:
-        for file in files:
-            if not file or file.filename == '':
-                continue
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(config.get('images_path'), filename))
-            status = "Accepted"
-            message = "File uploaded successfully!"
-
-            # Insert url to om_visit_photo
-            sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, '{config.get('images_url')}{filename}');"
-
-            log.info(f" Server execution -> {sql}")
-            print(f"SERVER EXECUTION: {sql}\n")
-            try:
-                db.execute(sql)
-            except exc.ProgrammingError:
-                log.warning(" Server execution failed")
-                print(f"Server execution failed\n{traceback.format_exc()}")
-                utils.remove_handlers(log)
-
-            utils.remove_handlers(log)
-    except Exception as e:
-        status = "Failed"
-        message = "Error"
-        print(e)
-    finally:
-        utils.remove_handlers(log)
-        return utils.create_response(status=status, message=message, do_jsonify=True, theme=theme)
-
-
-@visit_bp.route('/file', methods=['POST'])
-@optional_auth
-def uploadfile():
-
-    if not request.files:
-        print("No files")
-        utils.remove_handlers(log)
-        msg = "No files provided"
-        return utils.create_response(status=False, message=msg, do_jsonify=True)
-    files = request.files.getlist('files[]')
-
-    # args
-    args = request.form
-    theme = args.get("theme")
-    visit_id = args.get("visit_id")
-    # visit_type = args.get("visit_type")
-    # featureType = args.get("featureType")
-    # feature_id = args.get("id")
-
-    config = utils.get_config()
-    log = utils.create_log(__name__)
-    try:
-        db = utils.get_db(theme)
-    except:
-        utils.remove_handlers(log)
-
-    schema = utils.get_schema_from_theme(theme, config)
-
-    if files:
-        status = "Failed"
-        message = ""
-        try:
-            for file in files:
-                if not file or file.filename == '':
-                    continue
-                filename = secure_filename(file.filename)
-                file.save(os.path.join('/home/bgeoadmin/bgeo/images/bgeo/img/', filename))
-                status = "Accepted"
-                message = "File uploaded successfully!"
-
-                # Insert url to om_visit_photo
-                sql = f"INSERT INTO {schema}.om_visit_photo(visit_id, value) VALUES ({visit_id}, '{config.get('images_url')}{filename}');"
-
-                log.info(f" Server execution -> {sql}")
-                print(f"SERVER EXECUTION: {sql}\n")
-                try:
-                    db.execute(sql)
-                except exc.ProgrammingError:
-                    log.warning(" Server execution failed")
-                    print(f"Server execution failed\n{traceback.format_exc()}")
-                    utils.remove_handlers(log)
-
-                utils.remove_handlers(log)
-        except Exception as e:
-            status = "Failed"
-            message = "Error"
-            print(e)
-        finally:
-            utils.remove_handlers(log)
-            return utils.create_response(status=status, message=message, do_jsonify=True, theme=theme)
-
 
 @visit_bp.route('/getvisitmanager', methods=['GET'])
 @optional_auth
@@ -267,7 +170,7 @@ def getmanager():
 
 @visit_bp.route('/delete', methods=['DELETE'])
 @optional_auth
-def deletemincut():
+def deletevisit():
     """Delete visit
 
     Deletes a visit.
