@@ -33,12 +33,11 @@ def getlist():
     filterFields = request.args.get("filterFields")
     idName = request.args.get("idName")
     feature_id = request.args.get("id")
+    limit = request.args.get("limit", -1)
 
     # Manage filters
     filterFields_dict = {}
-    if filterFields in (None, "", "null", "{}"):
-        filterFields_dict = None
-    else:
+    if filterFields not in (None, "", "null", "{}"):
         filterFields = json.loads(str(filterFields))
         for k, v in filterFields.items():
             if v in (None, "", "null"):
@@ -47,6 +46,8 @@ def getlist():
                 "value": v.get("value"),
                 "filterSign": v.get("filterSign", "=")
             }
+
+    filterFields_dict["limit"] = limit
 
     # db fct
     form = f'"formName": "", "tabName": "{tabName}", "widgetname": "{widgetname}", "formtype": "{formtype}"'
