@@ -61,13 +61,20 @@ app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
 @app.errorhandler(Exception)
 def hande_error(e: Exception):
-    print(request.url, )
+    print("=========== ERROR OCCURRED ===========")
     request_str = request.url
-    request_json = request.get_json()
+    request_json = None
+    try:
+        request_json = request.get_json()
+    except Exception:
+        request_json = "{unknown}"
+
     if request_json:
         request_str += f" {request_json}"
     # request_str = html.escape(request_str)
     # request_str = request_str.replace("'", "\\'")
+
+    print(request_str)
 
     log = utils.create_log("-")
 
