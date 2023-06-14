@@ -11,13 +11,13 @@ import json
 from utils import get_fields_xml_vertical
 
 
-def handle_process_db_result(result: dict, parent_vals: int) -> Response:
+def handle_process_db_result(result: dict, parent_vals: dict) -> Response:
     response = {}
     if not result:
         logging.warning(" DB returned null")
         return jsonify({"message": "DB returned null"})
     if 'results' not in result or result['results'] > 0:
-        form_xml = process_create_xml_form(result["body"]["data"], parent_vals)
+        form_xml = create_xml_form(result["body"]["data"], parent_vals)
         # try:
         # except:
         #     form_xml = None
@@ -31,7 +31,7 @@ def handle_process_db_result(result: dict, parent_vals: int) -> Response:
     return jsonify(response)
 
 
-def process_create_xml_form(function: dict, parent_vals: int) -> str:
+def create_xml_form(function: dict, parent_vals: dict) -> str:
     form_xml = f"""
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
@@ -108,7 +108,7 @@ def get_log_tab_xml(function: dict):
 </widget>
     """
 
-def get_config_tab_xml(function: dict, parent_vals: int) -> str:
+def get_config_tab_xml(function: dict, parent_vals: dict) -> str:
 
     input_layer_xml = get_input_layer_xml(function, parent_vals)
     if input_layer_xml:
@@ -142,6 +142,8 @@ def get_tool_parameters_xml(function: dict) -> str:
     parameters_xml = ''
 
     parameters_list = function.get("fields", [])
+    if parameters_list == None:
+        parameters_list = []
 
     for i, field in enumerate(parameters_list):
         field["web_layoutorder"] = i
@@ -218,7 +220,7 @@ def get_feature_type_select_xml(features_type: dict, feature_text: str):
         </widget>
     """
 
-def get_input_layer_xml(function: dict, parent_vals: int) -> str:
+def get_input_layer_xml(function: dict, parent_vals: dict) -> str:
     print(function)
     if not function["functionparams"]["featureType"]:
         return ''

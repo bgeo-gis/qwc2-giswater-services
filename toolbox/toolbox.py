@@ -5,7 +5,8 @@
  or (at your option) any later version
 """ 
 import utils
-from .toolbox_utils import handle_process_db_result
+from .toolbox_process import handle_process_db_result
+from .toolbox_report import handle_report_db_result
 
 import json
 import traceback
@@ -20,10 +21,6 @@ toolbox_bp = Blueprint('toolbox', __name__)
 @toolbox_bp.route('/gettoolbox', methods=['GET'])
 @optional_auth
 def gettoolbox():
-    """Submit query
-
-    Returns additional information at clicked map position.
-    """
     config = utils.get_config()
     log = utils.create_log(__name__)
 
@@ -53,10 +50,6 @@ def gettoolbox():
 @toolbox_bp.route('/getprocess', methods=['POST'])
 @optional_auth
 def getprocess():
-    """Submit query
-
-    Returns additional information at clicked map position.
-    """
     config = utils.get_config()
     log = utils.create_log(__name__)
 
@@ -78,10 +71,6 @@ def getprocess():
 @toolbox_bp.route('/execute_process', methods=['POST'])
 @optional_auth
 def execute_process():
-    """Submit query
-
-    Returns additional information at clicked map position.
-    """
     config = utils.get_config()
     log = utils.create_log(__name__)
 
@@ -107,3 +96,25 @@ def execute_process():
     utils.remove_handlers(log)
 
     return jsonify(result)
+
+
+@toolbox_bp.route('/getreport', methods=['POST'])
+@optional_auth
+def getreport():
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    func_id = args.get("id")
+    parent_vals = args.get("parentVals", {})
+
+    extras = f'"listId": "{func_id}"'
+    body = utils.create_body(theme, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getreport', body)
+
+    utils.remove_handlers(log)
+
+    # return jsonify(result)
+    return handle_report_db_result(result, parent_vals)
