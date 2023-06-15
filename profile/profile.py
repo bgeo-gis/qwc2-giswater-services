@@ -100,6 +100,7 @@ def profileinfo():
 @optional_auth
 def profilesvg():
     log = utils.create_log(__name__)
+    config = utils.get_config()
     args = request.get_json(force=True) if request.is_json else request.args
 
     # args
@@ -120,6 +121,7 @@ def profilesvg():
     
     params = {'title': title, 'date': date}
 
+    images_url = config.get('images_url')
     img_path = generate_profile_svg(result, params)
-    img_path = f'/bgeo/profile/{os.path.basename(img_path)}'
+    img_path = f'{images_url}profile/{os.path.basename(img_path)}'
     return img_path

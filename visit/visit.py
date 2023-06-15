@@ -89,7 +89,7 @@ def setvisit():
     url_list = []
 
     for filename in files:
-        url = config.get('images_url')+ str(filename.filename)
+        url = f"{config.get('images_url')}img/{filename.filename}"
         url_list.append(url)
     
     files_json = json.dumps(list(str(x) for x in url_list))
