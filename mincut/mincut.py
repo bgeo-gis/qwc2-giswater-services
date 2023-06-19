@@ -40,14 +40,19 @@ def setmincut():
     if xcoord is None:
         xcoord = "null"
         ycoord = "null"
-        
+    
+    theme_conf = utils.get_config().get("themes").get(theme)
+    mincut_layer = theme_conf.get("mincut_layer")
+    
+    tiled = theme_conf.get("tiled", False) or mincut_layer is None
     # db fct
     coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
     extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
     if mincutId is not None:
         extras += f', "mincutId": {mincutId}'
-    body = utils.create_body(theme, project_epsg=epsg, extras=extras)
+    body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
+    result["body"]["data"]["mincutLayer"] = mincut_layer
 
     return manage_response(result, log, theme)
 

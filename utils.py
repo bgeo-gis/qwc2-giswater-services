@@ -26,16 +26,17 @@ api = None
 tenant_handler = None
 
 
-def create_body(theme, project_epsg=None, form='', feature='', filter_fields='', extras=None):
+def create_body(theme, project_epsg=None, form='', feature='', filter_fields='', tiled=None, extras=None):
     """ Create and return parameters as body to functions"""
 
     # info_types = {'full': 1}
     info_type = 1
     lang = "es_ES"  # TODO: get from app lang
-    try:
-        tiled = get_config().get("themes").get(theme).get("tiled", False)
-    except:
-        tiled = False
+    if tiled is None:
+        try:
+            tiled = get_config().get("themes").get(theme).get("tiled", False)
+        except:
+            tiled = False
 
     client = f'$${{"client":{{"device": 5, "lang": "{lang}", "cur_user": "{str(get_identity())}", "tiled": "{tiled}"'
     if info_type is not None:
