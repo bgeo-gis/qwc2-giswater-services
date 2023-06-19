@@ -60,22 +60,22 @@ def visit_create_xml_form(result: dict) -> str:
         if tabname == 'tab_data':
             # Layout 1
             form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_data_1"], "lyt_data_1")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_data_1", []), "lyt_data_1")
             form_xml += '</item>'
 
             # Layout 2
             form_xml += '<item>'
-            form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_data_2"], "lyt_data_2")
+            form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_data_2", []), "lyt_data_2")
             form_xml += '</item>'
         elif tabname == 'tab_file':
             # Layout 1
             form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_files_1"], "lyt_files_1")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_files_1", []), "lyt_files_1")
             form_xml += '</item>'
 
             # Layout 2
             form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_files_2"], "lyt_files_2")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_files_2", []), "lyt_files_2")
             form_xml += '</item>'
         
         form_xml += f'</layout>'
@@ -101,7 +101,7 @@ def visitmanager_create_xml_form(result: dict) -> str:
 
     # Layout 
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_visit_mng_1"], "lyt_visit_mng_1")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_visit_mng_1", []), "lyt_visit_mng_1")
     form_xml += '</item>'
 
     form_xml += '</layout>'

@@ -98,7 +98,7 @@ def get_combined_layout_xml(layout_name: str, fields_per_layout: dict, layouts: 
 def get_generic_tab_xml(layout_name: str, fields_per_layout: dict, layouts: list) -> str:
     xml = f'<layout class="QVBoxLayout" name="{layout_name}">'
     for layout in sorted(layouts):
-        fields = filter_fields(fields_per_layout[layout])
+        fields = filter_fields(fields_per_layout.get(layout, []))
         if len(fields) > 0:
             xml += (
                 f'<item>'

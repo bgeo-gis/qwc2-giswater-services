@@ -41,12 +41,12 @@ def mincut_create_xml_form(result: dict) -> str:
 
     # Toolbar
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_toolbar"], "lyt_toolbar")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_toolbar", []), "lyt_toolbar")
     form_xml += '</item>'
 
     # Layout top (id, state & work order)
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_top_1"], "lyt_top_1")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_top_1", []), "lyt_top_1")
     form_xml += '</item>'
 
     # Tabs
@@ -64,14 +64,14 @@ def mincut_create_xml_form(result: dict) -> str:
 
         if tabname == 'tab_plan':
             form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_plan_1"], "lyt_plan_1")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_plan_1", []), "lyt_plan_1")
             form_xml += '</item>'
             form_xml += '<item>'
             form_xml += f'<widget class="QGroupBox" name="grb_plan_details">'
             form_xml += f'<property name="title">'
             form_xml += f'<string>Detalles</string>'
             form_xml += '</property>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_plan_details"], "lyt_plan_details")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_plan_details", []), "lyt_plan_details")
             form_xml += f'</widget>'
             form_xml += '</item>'
             form_xml += '<item>'
@@ -79,7 +79,7 @@ def mincut_create_xml_form(result: dict) -> str:
             form_xml += f'<property name="title">'
             form_xml += f'<string>Fechas previstas</string>'
             form_xml += '</property>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_plan_fdates"], "lyt_plan_fdates")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_plan_fdates", []), "lyt_plan_fdates")
             form_xml += f'</widget>'
             form_xml += '</item>'
         elif tabname == 'tab_exec':
@@ -88,16 +88,16 @@ def mincut_create_xml_form(result: dict) -> str:
             form_xml += f'<property name="title">'
             form_xml += f'<string>Fechas reales</string>'
             form_xml += '</property>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_exec_1"], "lyt_exec_1")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_exec_1", []), "lyt_exec_1")
             form_xml += f'</widget>'
             form_xml += '</item>'
         elif tabname == 'tab_hydro':
             form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_hydro_1"], "lyt_hydro_1")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_hydro_1", []), "lyt_hydro_1")
             form_xml += '</item>'
         elif tabname == 'tab_log':
             form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout["lyt_log_1"], "lyt_log_1")
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_log_1", []), "lyt_log_1")
             form_xml += '</item>'
         
         form_xml += f'</layout>'
@@ -109,7 +109,7 @@ def mincut_create_xml_form(result: dict) -> str:
 
     # Layout bot (btn_accept, btn_cancel)
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_bot_1"], "lyt_bot_1")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_bot_1", []), "lyt_bot_1")
     form_xml += '</item>'
 
     form_xml += '</layout>'
@@ -129,17 +129,17 @@ def mincutmanager_create_xml_form(result: dict) -> str:
 
     # Layout top (id, state & work order)
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_mincut_mng_1"], "lyt_mincut_mng_1")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_mincut_mng_1", []), "lyt_mincut_mng_1")
     form_xml += '</item>'
 
     # Layout mid
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_mincut_mng_2"], "lyt_mincut_mng_2")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_mincut_mng_2", []), "lyt_mincut_mng_2")
     form_xml += '</item>'
 
     # Layout bot (btn_accept, btn_cancel)
     form_xml += '<item>'
-    form_xml += get_fields_xml_horizontal(fields_per_layout["lyt_mincut_mng_3"], "lyt_mincut_mng_3")
+    form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_mincut_mng_3", []), "lyt_mincut_mng_3")
     form_xml += '</item>'
 
     form_xml += '</layout>'
