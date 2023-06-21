@@ -144,8 +144,7 @@ def getlist():
     for k, v in filterFields.items():
         if v in (None, "", "null"):
             continue
-        request_json["data"]["filterFields"][k] = {
-            "columnname": v.get("columnname"),
+        request_json["data"]["filterFields"][v.get("columnname")] = {
             "value": v.get("value"),
             "filterSign": v.get("filterSign", "=")
     }

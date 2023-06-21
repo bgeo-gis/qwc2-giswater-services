@@ -12,6 +12,7 @@ from .visit_utils import manage_response
 import json
 import traceback
 import os
+import uuid
 
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
@@ -87,11 +88,14 @@ def setvisit():
     files = request.files.getlist('files[]') if request.files else []
 
     url_list = []
-
-    for filename in files:
-        url = f"{config.get('images_url')}img/{filename.filename}"
+    filenames = []
+    for file in files:
+        extension = os.path.splitext(file.filename)[1]
+        filename = f"{uuid.uuid1()}{extension}"
+        url = f"{config.get('images_url')}img/{filename}"
         url_list.append(url)
-    
+        filenames.append(filename)
+
     files_json = json.dumps(list(str(x) for x in url_list))
     """
     try:
@@ -135,11 +139,10 @@ def setvisit():
             except FileExistsError:
                 pass
 
-            for file in files:
+            for file, filename in zip(files, filenames):
                 print("=========== FILES IN SET VISIT =========================")
                 if not file or file.filename == '':
                     continue
-                filename = secure_filename(file.filename)
                 file.save(os.path.join(images_path, filename))
                 status = "Accepted"
                 message = "File uploaded successfully!"
