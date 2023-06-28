@@ -341,6 +341,13 @@ def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
         f'<property name="widgetfunction">'
          f'<string>{dict_to_str(widgetfunction)}</string>'
         f'</property>')
+    isfilter = field.get('isfilter', False)
+    if isfilter is None:
+        isfilter = False
+    widget_props_xml += (
+        f'<property name="isfilter">'
+         f'<bool>{str(isfilter).lower()}</bool>'
+        f'</property>')
 
     if widget_type in ("hspacer", "vspacer"):
         widget_xml = ''
