@@ -82,9 +82,22 @@ def setfields():
     featureType = args.get("featureType")
     fields = args.get("fields")
 
+    # Manage fields
+    fields_dict = {}
+    if fields not in (None, "", "null", "{}"):
+        fields = json.loads(str(fields))
+        for k, v in fields.items():
+            if v in (None, "", "null"):
+                continue
+            if type(v) is str:
+                fields_dict[k] = v
+                continue
+            fields_dict[v.get("columnname", k)] = v.get("value")
+
     # db fct
     feature = f'"id": "{id_}", "tableName": "{tableName}", "featureType": "{featureType}"'
-    extras = f'"fields": {json.dumps(fields)}'
+    fields = json.dumps(fields_dict) if fields_dict else ''
+    extras = f'"fields": {fields}'
     body = utils.create_body(theme, feature=feature, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setfields', body)
 
