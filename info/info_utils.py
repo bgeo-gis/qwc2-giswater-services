@@ -9,7 +9,7 @@ or (at your option) any later version.
 from typing import List, Tuple, Optional, Union, Callable
 import json
 from flask import jsonify, Response
-from utils import create_widget_xml, get_fields_per_layout, get_fields_xml_vertical, filter_fields, get_layouts_per_tab
+from utils import get_fields_per_layout, get_fields_xml_vertical, get_fields_xml_horizontal, filter_fields, get_layouts_per_tab
 
 def handle_db_result(result: dict) -> Response:
     response = {}
@@ -43,21 +43,19 @@ def create_xml_form(db_result: dict, simplified: bool=True) -> str:
 
     return form_xml
 
-# def generic_xml_form(db_result):
-#     form_xml = '<layout class="QGridLayout" name="MainLayout">'
-#     for field in db_result['body']['data']['fields']:
-#         form_xml += create_widget_xml(field)
-#     form_xml += '</layout>'
-
-#     return form_xml
-
 
 def full_xml_form(db_result):
     all_fields = db_result["body"]["data"]["fields"]
     fields_per_layout = get_fields_per_layout(all_fields)
     layouts_per_tab = get_layouts_per_tab(all_fields)
 
-    form_xml = '<layout class="QHBoxLayout" name="MainLayout">'
+    form_xml = '<layout class="QVBoxLayout" name="MainLayout">'
+    if 'lyt_toolbar' in fields_per_layout:
+        # Toolbar
+        form_xml += '<item>'
+        form_xml += get_fields_xml_horizontal(fields_per_layout['lyt_toolbar'], 'lyt_toolbar')
+        form_xml += '</item>'
+    # Tabs
     form_xml += '<item>'
     form_xml += '<widget class="QTabWidget" name="tabWidget">'
     form_xml += '<property name="currentIndex">'
@@ -76,6 +74,11 @@ def full_xml_form(db_result):
 
     form_xml += '</widget>'
     form_xml += '</item>'
+    if 'lyt_buttons' in fields_per_layout:
+        # Buttons
+        form_xml += '<item>'
+        form_xml += get_fields_xml_horizontal(fields_per_layout['lyt_buttons'], 'lyt_buttons')
+        form_xml += '</item>'
     form_xml += '</layout>'
 
     return form_xml
