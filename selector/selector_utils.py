@@ -170,7 +170,7 @@ def set_tab_xml(fields, tab_name, manage_all, selector_type):
         chk_all_xml += f'</property>'
         # Action setselectors
         chk_all_xml += f'<property name="action">'
-        chk_all_xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "id": "chk_all", "value": "{all_checked}"}}}}</string>'
+        chk_all_xml += f'<string>{{"name": "setSelectors", "params": {{"tabName": "{tab_name}", "id": "chk_all", "value": "{all_checked}", "selectorType": "{selector_type}"}}}}</string>'
         chk_all_xml += f'</property>'
 
         chk_all_xml += f'<property name="readOnly">'
