@@ -48,7 +48,6 @@ utils.app = app
 utils.api = api
 utils.tenant_handler = tenant_handler
 
-
 app.register_blueprint(info_bp, url_prefix='/info')
 app.register_blueprint(mincut_bp, url_prefix='/mincut')
 app.register_blueprint(flowtrace_bp, url_prefix='/flowtrace')
@@ -59,6 +58,7 @@ app.register_blueprint(visit_bp, url_prefix='/visit')
 app.register_blueprint(search_bp, url_prefix='/search')
 app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
+
 @app.errorhandler(Exception)
 def hande_error(e: Exception):
     print("=========== ERROR OCCURRED ===========")

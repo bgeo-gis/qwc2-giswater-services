@@ -18,6 +18,7 @@ from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
+from PIL import Image
 
 visit_bp = Blueprint('visit', __name__)
 
@@ -90,28 +91,15 @@ def setvisit():
     url_list = []
     filenames = []
     for file in files:
-        extension = os.path.splitext(file.filename)[1]
+        # extension = os.path.splitext(file.filename)[1]
+        extension = ".jpeg"
         filename = f"{uuid.uuid1()}{extension}"
         url = f"{config.get('images_url')}img/{filename}"
         url_list.append(url)
         filenames.append(filename)
 
     files_json = json.dumps(list(str(x) for x in url_list))
-    """
-    try:
-        db = utils.get_db(theme)
-    except:
-        utils.remove_handlers(log)
-
-    schema = utils.get_schema_from_theme(theme, config)
-
-    if schema is None:
-        log.warning(" Schema is None")
-        utils.remove_handlers(log)
-        return jsonify({"schema": schema})
-
-    log.info(f" Selected schema {str(schema)}")
-    """
+    
     feature = ''
     if visitId is not None:
         feature += f'"visitId": {visitId}'
@@ -143,7 +131,9 @@ def setvisit():
                 print("=========== FILES IN SET VISIT =========================")
                 if not file or file.filename == '':
                     continue
-                file.save(os.path.join(images_path, filename))
+                file = Image.open(file)
+                file = file.convert("RGB")
+                file.save(os.path.join(images_path, filename), optimize=True, quality=75)
                 status = "Accepted"
                 message = "File uploaded successfully!"
         except Exception as e:

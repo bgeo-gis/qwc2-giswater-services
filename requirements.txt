@@ -2,6 +2,7 @@ Flask==2.3.2
 flask-restx==1.1.0
 flask-jwt-extended
 psycopg2
+Pillow
 matplotlib==3.6.2
 SQLAlchemy==1.4.48
 Werkzeug>=2.3.4
