@@ -11,22 +11,6 @@ import json
 from flask import jsonify, Response
 from utils import get_fields_per_layout, get_fields_xml_vertical, get_fields_xml_horizontal, filter_fields, get_layouts_per_tab
 
-def handle_db_result(result: dict) -> Response:
-    response = {}
-    if 'results' not in result or result['results'] > 0:
-        form_xml = create_xml_form(result)
-        response = {
-            "feature": {
-                "id": result["body"]["feature"]["id"],
-                "idName": result["body"]["feature"]["idName"],
-                "geometry": result["body"]["feature"]["geometry"]["st_astext"]
-            },
-            "form_xml": form_xml
-        }
-
-    return jsonify(response)
-
-
 def create_xml_form(db_result: dict, editable: bool) -> str:
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'

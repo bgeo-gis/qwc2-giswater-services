@@ -77,10 +77,12 @@ def fromid():
     body = utils.create_body(theme, form=form, feature=feature)
     result = utils.execute_procedure(log, theme, 'gw_fct_getinfofromid', body)
 
+    editable = config.get("themes").get(theme).get("editable", False)
     # form xml
     try:
-        form_xml = create_xml_form(result)
-    except:
+        form_xml = create_xml_form(result, editable)
+    except Exception as e:
+        print(e)
         form_xml = None
 
     utils.remove_handlers(log)
