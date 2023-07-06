@@ -27,7 +27,7 @@ def handle_db_result(result: dict) -> Response:
     return jsonify(response)
 
 
-def create_xml_form(db_result: dict, simplified: bool=True) -> str:
+def create_xml_form(db_result: dict, editable: bool) -> str:
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'
     form_xml += '<widget class="QWidget" name="Form">'
@@ -36,7 +36,7 @@ def create_xml_form(db_result: dict, simplified: bool=True) -> str:
         # form_xml += generic_xml_form(db_result)
         form_xml += get_fields_xml_vertical(db_result['body']['data']['fields'], "MainLayout")
     else:
-        form_xml += full_xml_form(db_result)
+        form_xml += full_xml_form(db_result, editable)
 
     form_xml += '</widget>'
     form_xml += '</ui>'
@@ -44,7 +44,7 @@ def create_xml_form(db_result: dict, simplified: bool=True) -> str:
     return form_xml
 
 
-def full_xml_form(db_result):
+def full_xml_form(db_result, editable: bool):
     all_fields = db_result["body"]["data"]["fields"]
     fields_per_layout = get_fields_per_layout(all_fields)
     layouts_per_tab = get_layouts_per_tab(all_fields)
@@ -68,7 +68,7 @@ def full_xml_form(db_result):
         form_xml += f'<string>{tab["tabLabel"]}</string>'
         form_xml += '</attribute>'
 
-        form_xml += get_tab_xml(tab["tabName"], all_fields, fields_per_layout, layouts_per_tab)
+        form_xml += get_tab_xml(tab["tabName"], all_fields, fields_per_layout, layouts_per_tab, editable)
 
         form_xml += '</widget>'
 
@@ -84,17 +84,20 @@ def full_xml_form(db_result):
     return form_xml
 
 
-def get_tab_xml(tab_name: str, fields: list, fields_per_layout: dict, layouts_per_tab: dict) -> str:
+def get_tab_xml(tab_name: str, fields: list, fields_per_layout: dict, layouts_per_tab: dict, editable: bool) -> str:
     layouts = layouts_per_tab.get(tab_name, [])
     layout_name = f"lyt_{tab_name}"
-    if tab_name == "tab_data":      return get_combined_layout_xml(layout_name, fields_per_layout, layouts)
-    else:                           return get_generic_tab_xml(layout_name, fields_per_layout, layouts)
+    if tab_name == "tab_data":  return get_combined_layout_xml(layout_name, fields_per_layout, layouts, editable)
+    else:                       return get_generic_tab_xml(layout_name, fields_per_layout, layouts)
 
 
-def get_combined_layout_xml(layout_name: str, fields_per_layout: dict, layouts: list) -> str:
+def get_combined_layout_xml(layout_name: str, fields_per_layout: dict, layouts: list, editable: bool) -> str:
     fields = []
     for layout in layouts:
         fields.extend(fields_per_layout.get(layout, []))
+    if not editable:
+        for field in fields:
+            field["iseditable"] = False
     return get_fields_xml_vertical(fields, layout_name)
 
 

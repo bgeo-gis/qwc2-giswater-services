@@ -47,9 +47,10 @@ def fromcoordinates():
     body = utils.create_body(theme, form=form, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getinfofromcoordinates', body)
 
+    editable = config.get("themes").get(theme).get("editable", False)
     # form xml
     try:
-        form_xml = create_xml_form(result)
+        form_xml = create_xml_form(result, editable)
     except:
         form_xml = None
 
