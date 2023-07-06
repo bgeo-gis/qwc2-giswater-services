@@ -61,6 +61,10 @@ def getlist():
 
     utils.remove_handlers(log)
 
+    # TODO: This is only for diabling mincut selector in tiled
+    theme_conf = utils.get_config().get("themes").get(theme)
+    result["body"]["data"]["mincutLayer"] = theme_conf.get("mincut_layer")
+
     return utils.create_response(result, do_jsonify=True, theme=theme)
 
 
