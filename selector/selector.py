@@ -13,6 +13,7 @@ import json
 import traceback
 
 from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth
 from sqlalchemy import text, exc
 
@@ -20,7 +21,7 @@ selector_bp = Blueprint('selector', __name__)
 
 
 @selector_bp.route('/get', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getselector():
     """Get selector
 
@@ -51,7 +52,7 @@ def getselector():
 
 
 @selector_bp.route('/set', methods=['POST'])
-@optional_auth
+@jwt_required()
 def setselector():
     """Set selector
 

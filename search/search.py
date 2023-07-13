@@ -11,6 +11,7 @@ import json
 import traceback
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
@@ -18,7 +19,7 @@ from sqlalchemy import text, exc
 search_bp = Blueprint('search', __name__)
 
 @search_bp.route('/getsearch', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getsearch():
     """Get search
     Get current user's search results.
@@ -41,7 +42,7 @@ def getsearch():
 
 
 @search_bp.route('/setsearch', methods=['GET', 'POST'])
-@optional_auth
+@jwt_required()
 def setsearch():
     """Set search
     Calls gw_fct_set_new_search.

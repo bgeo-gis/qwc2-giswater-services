@@ -15,6 +15,7 @@ import os
 import uuid
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from werkzeug.utils import secure_filename
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
@@ -24,7 +25,7 @@ visit_bp = Blueprint('visit', __name__)
 
 
 @visit_bp.route('/getvisit', methods=['GET', 'PUT'])
-@optional_auth
+@jwt_required()
 def getvisit():
     config = utils.get_config()
     log = utils.create_log(__name__)
@@ -64,7 +65,7 @@ def getvisit():
 
 
 @visit_bp.route('/setvisit', methods=['POST'])
-@optional_auth
+@jwt_required()
 def setvisit():
     """Submit query
 
@@ -144,7 +145,7 @@ def setvisit():
     return utils.create_response(result, do_jsonify=True, theme=theme)
 
 @visit_bp.route('/getvisitmanager', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getmanager():
     """Get visit manager
 
@@ -162,7 +163,7 @@ def getmanager():
     return manage_response(result, log, manager=True)
 
 @visit_bp.route('/delete', methods=['DELETE'])
-@optional_auth
+@jwt_required()
 def deletevisit():
     """Delete visit
 

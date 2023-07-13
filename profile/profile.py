@@ -12,6 +12,7 @@ from .profile_utils import handle_db_result, get_profiletool_ui, generate_profil
 import os
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
@@ -19,7 +20,7 @@ profile_bp = Blueprint('profile', __name__)
 
 
 @profile_bp.route('/getdialog', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getdialog():
     """Submit query
 
@@ -40,7 +41,7 @@ def getdialog():
 
 
 @profile_bp.route('/nodefromcoordinates', methods=['GET'])
-@optional_auth
+@jwt_required()
 def nodefromcoordinates():
     """Submit query
 
@@ -72,7 +73,7 @@ def nodefromcoordinates():
 
 
 @profile_bp.route('/profileinfo', methods=['GET'])
-@optional_auth
+@jwt_required()
 def profileinfo():
     """
     Submit query
@@ -97,7 +98,7 @@ def profileinfo():
 
 
 @profile_bp.route('/profilesvg', methods=['GET'])
-@optional_auth
+@jwt_required()
 def profilesvg():
     log = utils.create_log(__name__)
     config = utils.get_config()

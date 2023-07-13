@@ -10,13 +10,14 @@ import json
 import traceback
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
 util_bp = Blueprint('util', __name__)
 
 @util_bp.route('/getlist', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getlist():
     """Get list
 
@@ -69,7 +70,7 @@ def getlist():
 
 
 @util_bp.route('/setfields', methods=['PUT'])
-@optional_auth
+@jwt_required()
 def setfields():
     """Submit query
 
@@ -111,7 +112,7 @@ def setfields():
 
 
 @util_bp.route('/setinitproject', methods=['POST'])
-@optional_auth
+@jwt_required()
 def setinitproject():
     """Submit query
 

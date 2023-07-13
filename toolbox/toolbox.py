@@ -12,6 +12,7 @@ import json
 import traceback
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
@@ -19,7 +20,7 @@ toolbox_bp = Blueprint('toolbox', __name__)
 
 
 @toolbox_bp.route('/gettoolbox', methods=['GET'])
-@optional_auth
+@jwt_required()
 def gettoolbox():
     config = utils.get_config()
     log = utils.create_log(__name__)
@@ -48,7 +49,7 @@ def gettoolbox():
     return utils.create_response(result, do_jsonify=True, theme=theme)
 
 @toolbox_bp.route('/getprocess', methods=['POST'])
-@optional_auth
+@jwt_required()
 def getprocess():
     config = utils.get_config()
     log = utils.create_log(__name__)
@@ -69,7 +70,7 @@ def getprocess():
 
 
 @toolbox_bp.route('/execute_process', methods=['POST'])
-@optional_auth
+@jwt_required()
 def execute_process():
     config = utils.get_config()
     log = utils.create_log(__name__)
@@ -99,7 +100,7 @@ def execute_process():
 
 
 @toolbox_bp.route('/getreport', methods=['POST'])
-@optional_auth
+@jwt_required()
 def getreport():
     config = utils.get_config()
     log = utils.create_log(__name__)

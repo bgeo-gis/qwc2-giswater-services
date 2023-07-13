@@ -13,6 +13,7 @@ import json
 import traceback
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
@@ -20,7 +21,7 @@ info_bp = Blueprint('info', __name__)
 
 
 @info_bp.route('/fromcoordinates', methods=['GET'])
-@optional_auth
+@jwt_required()
 def fromcoordinates():
     """Submit query
 
@@ -60,7 +61,7 @@ def fromcoordinates():
 
 
 @info_bp.route('/fromid', methods=['GET'])
-@optional_auth
+@jwt_required()
 def fromid():
     config = utils.get_config()
     log = utils.create_log(__name__)
@@ -91,7 +92,7 @@ def fromid():
 
 
 @info_bp.route('/getlist', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getlist():
     config = utils.get_config()
     log = utils.create_log(__name__)
@@ -160,7 +161,7 @@ def getlist():
 
 
 @info_bp.route('/getgraph', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getgraph():
     """
     Submit query
@@ -199,7 +200,7 @@ def getgraph():
 
 
 @info_bp.route('/getdma', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getdma():
     """
     Submit query
@@ -270,7 +271,7 @@ def getdma():
 
 
 @info_bp.route('/getlayersfromcoordinates', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getlayersfromcoordinates():
     """Submit query
 

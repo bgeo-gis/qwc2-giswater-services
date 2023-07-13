@@ -4,12 +4,16 @@
  General Public License as published by the Free Software Foundation, either version 3 of the License,
  or (at your option) any later version
 """ 
+
+# DEPRECATED: Now inside mapproxy-service
+
 import utils
 
 import html
 import json
 
 from flask import Blueprint, request, make_response
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth
 import subprocess
 
@@ -17,7 +21,7 @@ tiling_bp = Blueprint('tiling', __name__)
 
 
 @tiling_bp.route('/update', methods=['GET'])
-@optional_auth
+@jwt_required()
 def update():
     """Submit query
     """

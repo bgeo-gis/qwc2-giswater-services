@@ -9,13 +9,14 @@ or (at your option) any later version.
 import utils
 
 from flask import Blueprint, request
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth
 
 flowtrace_bp = Blueprint('flowtrace', __name__)
 
 
 @flowtrace_bp.route('/upstream', methods=['GET'])
-@optional_auth
+@jwt_required()
 def upstream():
     """Upstream
 
@@ -42,7 +43,7 @@ def upstream():
 
 
 @flowtrace_bp.route('/downstream', methods=['GET'])
-@optional_auth
+@jwt_required()
 def downstream():
     """Downstream
 

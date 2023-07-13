@@ -14,6 +14,7 @@ import json
 import traceback
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
@@ -21,7 +22,7 @@ from sqlalchemy import text, exc
 dateselector_bp = Blueprint('dateselector', __name__)
 
 @dateselector_bp.route('/dialog', methods=['GET'])
-@optional_auth
+@jwt_required()
 def dialog():
     """Submit query
 
@@ -43,7 +44,7 @@ def dialog():
 
 
 @dateselector_bp.route('/dates', methods=['GET', 'PUT'])
-@optional_auth
+@jwt_required()
 def dates():
     """Submit query
 

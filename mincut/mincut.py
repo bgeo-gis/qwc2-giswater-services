@@ -12,6 +12,7 @@ import traceback
 from .mincut_utils import manage_response
 
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
@@ -19,7 +20,7 @@ mincut_bp = Blueprint('mincut', __name__)
 
 
 @mincut_bp.route('/setmincut', methods=['GET', 'POST'])
-@optional_auth
+@jwt_required()
 def setmincut():
     """Set mincut
 
@@ -58,7 +59,7 @@ def setmincut():
 
 
 @mincut_bp.route('/open', methods=['GET'])
-@optional_auth
+@jwt_required()
 def openmincut():
     """Open mincut
 
@@ -80,7 +81,7 @@ def openmincut():
 
 
 @mincut_bp.route('/cancel', methods=['GET', 'POST'])
-@optional_auth
+@jwt_required()
 def cancelmincut():
     """Cancel mincut
 
@@ -102,7 +103,7 @@ def cancelmincut():
 
 
 @mincut_bp.route('/delete', methods=['DELETE'])
-@optional_auth
+@jwt_required()
 def deletemincut():
     """Delete mincut
 
@@ -124,7 +125,7 @@ def deletemincut():
 
 
 @mincut_bp.route('/accept', methods=['POST'])
-@optional_auth
+@jwt_required()
 def accept():
     """Accept mincut
 
@@ -159,7 +160,7 @@ def accept():
 
 
 @mincut_bp.route('/changevalvestatus', methods=['GET', 'POST'])
-@optional_auth
+@jwt_required()
 def change_valve_status():
     """Change valve status
 
@@ -188,7 +189,7 @@ def change_valve_status():
 
 
 @mincut_bp.route('/getmincutmanager', methods=['GET'])
-@optional_auth
+@jwt_required()
 def getmanager():
     """Get mincut manager
 
