@@ -63,7 +63,6 @@ app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
 
 # Setup mailer
-print("TEEEEST -> ",os.getenv('MAIL_SERVER'))
 def mail_config_from_env(app):
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
     app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
