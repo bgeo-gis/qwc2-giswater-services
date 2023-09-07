@@ -21,6 +21,8 @@ from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 from PIL import Image
 
+import urllib.parse
+
 visit_bp = Blueprint('visit', __name__)
 
 
@@ -181,3 +183,36 @@ def deletevisit():
     result = utils.execute_procedure(log, theme, 'gw_fct_setdelete', body)
 
     return manage_response(result, log, theme)
+
+@visit_bp.route('/getmail', methods=['POST'])
+@jwt_required()
+def getmail():
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    widgets = args.get("widgets")
+    widgetValues = args.get("widgetValues")
+    ignoreWidgets = args.get("ignoreWidgets")
+    email = args.get("email")
+    shareUrl = args.get("shareUrl")
+    
+    title=""
+    body=""
+    widget_ids = {widget['column_id']: widget for widget in widgets}
+    for value in widgetValues:
+        columnname = widgetValues[value]['columnname']
+        if columnname not in ignoreWidgets and columnname in widget_ids:
+            widget = widget_ids[columnname]
+            line = f'{widget["label"]}'
+            if 'value' in widget:
+                line += f' {widgetValues[value]["value"]}'
+            elif 'comboNames' in widget:
+                combo_ids = widget['comboIds']
+                combo_names = widget['comboNames']
+                if columnname == 'class_id' and widgetValues[value]["value"] in combo_ids:
+                    title = combo_names[combo_ids.index(widgetValues[value]["value"])]
+                line += f' {combo_names[combo_ids.index(widgetValues[value]["value"])]}'
+            body += line + '\n'
+            
+    body += f'\n\nShare url: {shareUrl}'
+    mailtoLink = f'mailto:{email}?subject={urllib.parse.quote(title)}&body={urllib.parse.quote(body)}'
+    return mailtoLink

@@ -14,6 +14,9 @@ from flask_jwt_extended import jwt_required
 from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
 
+
+from flask_mail import Message
+
 util_bp = Blueprint('util', __name__)
 
 @util_bp.route('/getlist', methods=['GET'])

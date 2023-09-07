@@ -7,12 +7,14 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-
+import os
 from flask import Flask, jsonify, Response, request
 from qwc_services_core.api import Api
 from qwc_services_core.app import app_nocache
 from qwc_services_core.auth import auth_manager
 from qwc_services_core.tenant_handler import TenantHandler
+
+from flask_mail import Mail
 
 from info.info import info_bp
 from mincut.mincut import mincut_bp
@@ -39,7 +41,8 @@ app.config.SWAGGER_UI_DOC_EXPANSION = 'list'
 # disable verbose 404 error message
 app.config['ERROR_404_HELP'] = False
 # disable sorting of json keys
-app.config['JSON_SORT_KEYS'] = False
+# app.config['JSON_SORT_KEYS'] = False
+app.json.sort_keys = False
 
 auth = auth_manager(app, api)
 tenant_handler = TenantHandler(app.logger)
@@ -58,6 +61,34 @@ app.register_blueprint(visit_bp, url_prefix='/visit')
 app.register_blueprint(search_bp, url_prefix='/search')
 app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
+
+# Setup mailer
+print("TEEEEST -> ",os.getenv('MAIL_SERVER'))
+def mail_config_from_env(app):
+    app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
+    app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+    app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+    app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT'))
+    app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+    app.config['MAIL_USE_SSL'] = os.getenv('MAIL_USE_SSL', 'False') == 'True'
+    app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER')
+
+try:
+    # Código para configurar y utilizar Flask-Mail
+    mail_config_from_env(app)
+    mail = Mail(app)
+    utils.mail = mail
+    #Controller(app,mail)
+except Exception as e:
+    print(f"Excepcion===: {str(e)}")
+
+print("------------------------------------")
+print(f"MAIL_SERVER: {app.config['MAIL_SERVER']}")
+print(f"MAIL_PORT: {app.config['MAIL_PORT']}")
+print(f"MAIL_USERNAME: {app.config['MAIL_USERNAME']}")
+print(f"MAIL_PASSWORD: {app.config['MAIL_PASSWORD']}")
+print(f"MAIL_USE_TLS: {app.config['MAIL_USE_TLS']}")
+print(f"MAIL_USE_SSL: {app.config['MAIL_USE_SSL']}")
 
 @app.errorhandler(Exception)
 def hande_error(e: Exception):

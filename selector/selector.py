@@ -72,15 +72,22 @@ def setselector():
     isAlone = args.get("isAlone")
     disableParent = args.get("disableParent")
     addSchema = args.get("addSchema")
+    ids = args.get("ids")
 
+    theme_conf = utils.get_config().get("themes").get(theme)
+    tiled = theme_conf.get("tiled", False)
     # db fct
     extras = f'"selectorType": "{selectorType}", "tabName": "{tabName}", "addSchema": "{addSchema}"'
+    if ids:
+        ids = ids.split(",")
+        ids_list = [int(x) for x in ids]
+        extras += f', "ids": {ids_list}'
     if widget_id == 'chk_all':
         extras += f', "checkAll": "{value}"'
     else:
         extras += f', "id": "{widget_id}", "isAlone": "{isAlone}", "disableParent": "{disableParent}", "value": "{value}"'
 
-    body = utils.create_body(theme, project_epsg=epsg, extras=extras)
+    body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
     result = utils.execute_procedure(log, theme, 'gw_fct_setselectors', body)
 
     return make_response(result, theme, config, log)

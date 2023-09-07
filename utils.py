@@ -24,7 +24,7 @@ import traceback
 app = None
 api = None
 tenant_handler = None
-
+mail = None
 
 def create_body(theme, project_epsg=None, form='', feature='', filter_fields='', tiled=None, extras=None):
     """ Create and return parameters as body to functions"""

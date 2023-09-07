@@ -62,7 +62,7 @@ def nodefromcoordinates():
     # zoomRatio = args.get("zoomRatio")
 
     coords = coords.split(',')
-    layers = utils.parse_layers(layers, config, theme)
+    #layers = utils.parse_layers(layers, config, theme)
 
     extras = f'"coordinates": {{ "epsg": {int(epsg)},"xcoord": {coords[0]},"ycoord": {coords[1]},"zoomRatio": {float(zoom)}}}'
 
@@ -80,7 +80,6 @@ def profileinfo():
     Returns additional information at clicked map position.
     """
     log = utils.create_log(__name__)
-
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
@@ -109,15 +108,15 @@ def profilesvg():
     epsg = args.get("epsg")
     initNode = args.get("initNode")
     endNode = args.get("endNode")
-    vnode_dist = args.get("vnode_dist")
+    vnodeDist = args.get("vnodeDist")
     title = args.get("title")
     date = args.get("date")
     
-    extras = f'"initNode": {initNode}, "endNode": {endNode}, "linksDistance": {vnode_dist}'
+    extras = f'"initNode": {initNode}, "endNode": {endNode}, "linksDistance": {vnodeDist}'
 
     body = utils.create_body(theme=theme, project_epsg=epsg, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getprofilevalues', body)
-
+    
     utils.remove_handlers(log)
     
     params = {'title': title, 'date': date}
