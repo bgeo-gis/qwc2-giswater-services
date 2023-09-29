@@ -247,13 +247,13 @@ def get_layouts_per_tab(all_fields: list) -> dict:
         layouts_per_tab.setdefault(field.get("tabname"), set()).add(field.get("layoutname"))
     return layouts_per_tab
 
-def filter_fields(fields: list) -> list:
-    sorted_fields = sorted(fields, key=lambda f: (f["web_layoutorder"] is None, f["web_layoutorder"])) # Keep Nones at the end
+def filter_fields(fields: list, key: str = "web_layoutorder") -> list:
+    sorted_fields = sorted(fields, key=lambda f: (f[key] is None, f[key])) # Keep Nones at the end
     filtered_fields = []
     i = 0
     for field in sorted_fields:
         if (
-            field.get("web_layoutorder") is not None and
+            field.get(key) is not None and
             field.get("hidden") not in (True, 'True', 'true')
         ):
             field["web_layoutorder"] = i

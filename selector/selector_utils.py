@@ -81,9 +81,11 @@ def set_tab_xml(fields, tab_name, manage_all, selector_type):
     chk_all = False
     all_checked = True
 
+    fields = utils.filter_fields(fields, key="orderby")
+
     for idx, field in enumerate(fields):
-        row = field["orderby"]
-        if chk_all:
+        row = field["web_layoutorder"]
+        if manage_all.lower() == "true":
             row += 1
         value = ""
         if "value" in field:
