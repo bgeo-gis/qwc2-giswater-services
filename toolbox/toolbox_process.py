@@ -248,22 +248,21 @@ def get_input_layer_xml(function: dict, parent_vals: dict) -> str:
 
     layer_select_row = 1 if feature_type_select_xml else 0
 
-    layer_select_props = ""
-    for i, name in enumerate(features_type[feature_text]):
-            layer_select_props += f"""
-            <item>
-             <property name="value">
-              <string>{name}</string>
-             </property>
-             <property name="text">
-              <string>{name}</string>
-             </property>
-            </item>
-            """
+  
+    layer_select_props = f"""
+    <item>
+        <property name="value">
+        <string>{feature_text}</string>
+        </property>
+        <property name="text">
+        <string>{feature_text}</string>
+        </property>
+    </item>
+    """
     layer_select_xml = f"""
         <widget class="QComboBox" name="cmb_layers">
          <property name="value">
-          <string>{features_type[feature_text][0]}</string>
+          <string>{feature_text}</string>
          </property>
          {layer_select_props}
          <property name="parentId">
