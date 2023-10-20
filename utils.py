@@ -311,12 +311,21 @@ def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
     widget_name = field["columnname"]
     value = field.get("value", "")
 
+    tooltip = field.get('tooltip')
+    tooltip_prop_xml = ''
+    if tooltip != None:
+        tooltip_prop_xml = (
+            f'<property name="toolTip">'
+             f'<string>{tooltip}</string>'
+            f'</property>')
+
     if field["label"] not in (None, 'None', ''):
         label_xml = (
             f'<widget class="QLabel" name="{widget_name}_label">'
              f'<property name="text">'
               f'<string>{field["label"]}</string>'
              f'</property>'
+             f'{tooltip_prop_xml}'
             f'</widget>')
 
     widget_props_xml = ""
@@ -348,6 +357,7 @@ def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
         f'<property name="isfilter">'
          f'<bool>{str(isfilter).lower()}</bool>'
         f'</property>')
+    widget_props_xml += tooltip_prop_xml
 
     if widget_type in ("hspacer", "vspacer"):
         widget_xml = ''
