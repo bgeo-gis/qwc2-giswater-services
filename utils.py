@@ -126,16 +126,9 @@ def execute_procedure(log, theme, function_name, parameters=None):
     with db.begin() as conn:
         result = dict()
         print(f"SERVER EXECUTION: {sql}\n")
-        try:
-            conn.execute(text(f"SET ROLE {get_identity()};"))
-            result = conn.execute(text(sql)).fetchone()[0]
-            response_msg = json.dumps(result)
-        except exc.ProgrammingError as e:
-            response_msg = traceback.format_exc()
-            log.warning(f"{execution_msg}|||{response_msg}")
-            print(f"Server execution failed\n{traceback.format_exc()}")
-            remove_handlers()
-            return create_response(status=False, message=e, do_jsonify=True, theme=theme)
+        conn.execute(text(f"SET ROLE {get_identity()};"))
+        result = conn.execute(text(sql)).fetchone()[0]
+        response_msg = json.dumps(result)
         if not result or result.get('status') == "Failed":
             log.warning(f"{execution_msg}|||{response_msg}") 
         else:
