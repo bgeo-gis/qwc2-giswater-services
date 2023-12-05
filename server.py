@@ -26,6 +26,7 @@ from visit.visit import visit_bp
 from search.search import search_bp
 from toolbox.toolbox import toolbox_bp
 from util.util import util_bp
+from custom_search.custom_search import custom_search_bp
 
 import traceback
 import html
@@ -61,6 +62,7 @@ app.register_blueprint(visit_bp, url_prefix='/visit')
 app.register_blueprint(search_bp, url_prefix='/search')
 app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
+app.register_blueprint(custom_search_bp, url_prefix='/customSearch')
 
 # Setup mailer
 def mail_config_from_env(app):
