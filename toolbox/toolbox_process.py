@@ -44,6 +44,7 @@ def create_xml_form(function: dict, parent_vals: dict) -> str:
       <number>0</number>
      </property>
      {get_config_tab_xml(function, parent_vals)}
+     {get_geojson_tabs_xml(function)}
      {get_log_tab_xml(function)}
     </widget>
    </item>
@@ -92,7 +93,7 @@ def get_log_tab_xml(function: dict):
     return f"""
 <widget class="QWidget" name="tab_loginfo">
  <attribute name="title">
-  <string>Info Log</string>
+  <string>Log</string>
  </attribute>
  <layout class="QGridLayout" name="gridLayout_2">
   <item row="0" column="0">
@@ -103,6 +104,43 @@ def get_log_tab_xml(function: dict):
     <property name="text">
      <string></string>
     </property>
+   </widget>
+  </item>
+ </layout>
+</widget>
+    """
+
+def get_geojson_tabs_xml(function: dict):
+    return f"""
+<widget class="QWidget" name="tab_point">
+ <attribute name="title">
+  <string>ResultPoint</string>
+ </attribute>
+ <layout class="QGridLayout" name="gridLayout_point">
+  <item row="0" column="0">
+   <widget class="QTableWidget" name="point_table">
+   </widget>
+  </item>
+ </layout>
+</widget>
+<widget class="QWidget" name="tab_line">
+ <attribute name="title">
+  <string>ResultLine</string>
+ </attribute>
+ <layout class="QGridLayout" name="gridLayout_line">
+  <item row="0" column="0">
+   <widget class="QTableWidget" name="line_table">
+   </widget>
+  </item>
+ </layout>
+</widget>
+<widget class="QWidget" name="tab_polygon">
+ <attribute name="title">
+  <string>ResultPol</string>
+ </attribute>
+ <layout class="QGridLayout" name="gridLayout_polygon">
+  <item row="0" column="0">
+   <widget class="QTableWidget" name="polygon_table">
    </widget>
   </item>
  </layout>
