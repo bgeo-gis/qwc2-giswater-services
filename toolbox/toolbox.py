@@ -84,6 +84,8 @@ def execute_process():
     table_name = args.get("tableName")
 
     print(args)
+    # Set value to null for empty params
+    params = {key: None if value == '' else value for key, value in params.items()}
 
     extras = f'"parameters": {json.dumps(params)}'
 
