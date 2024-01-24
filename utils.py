@@ -328,6 +328,12 @@ def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
     widget_props_xml += (
         f'<property name="readOnly">'
          f'<bool>{read_only}</bool>'
+        f'</property>')    
+    
+    required = str(field.get('isMandatory', False)).lower()
+    widget_props_xml += (
+        f'<property name="required">'
+         f'<bool>{required}</bool>'
         f'</property>')
 
     def dict_to_str(x: dict) -> str:
