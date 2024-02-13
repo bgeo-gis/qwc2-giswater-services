@@ -100,11 +100,12 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
     return response
 
 
-def execute_procedure(log, theme, function_name, parameters=None):
+def execute_procedure(log, theme, function_name, parameters=None, set_role=True):
     """ Manage execution database function
     :param function_name: Name of function to call (text)
     :param parameters: Parameters for function (json) or (query parameters)
     :param log_sql: Show query in qgis log (bool)
+    :param set_role: Set role in database with the current user
     :return: Response of the function executed (json)
     """
 
@@ -126,7 +127,7 @@ def execute_procedure(log, theme, function_name, parameters=None):
     with db.begin() as conn:
         result = dict()
         print(f"SERVER EXECUTION: {sql}\n")
-        conn.execute(text(f"SET ROLE {get_identity()};"))
+        if set_role: conn.execute(text(f"SET ROLE {get_identity()};"))
         result = conn.execute(text(sql)).fetchone()[0]
         response_msg = json.dumps(result)
         if not result or result.get('status') == "Failed":
