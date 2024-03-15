@@ -52,7 +52,7 @@ def setmincut():
     if mincutId is not None:
         extras += f', "mincutId": {mincutId}'
     body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body, needs_write=True)
     result["body"]["data"]["mincutLayer"] = mincut_layer
 
     return manage_response(result, log, theme)
@@ -75,7 +75,7 @@ def openmincut():
     # db fct
     extras = f'"mincutId": {mincut_id}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_getmincut', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getmincut', body, needs_write=True)
 
     return manage_response(result, log, theme)
 
@@ -97,7 +97,7 @@ def cancelmincut():
     # db fct
     extras = f'"action": "mincutCancel", "mincutId": {mincutId}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body, needs_write=True)
 
     return manage_response(result, log, theme)
 
@@ -119,7 +119,7 @@ def deletemincut():
     # db fct
     extras = f'"action": "mincutDelete", "mincutId": {mincut_id}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body, needs_write=True)
 
     return manage_response(result, log, theme)
 
@@ -154,7 +154,7 @@ def accept():
     extras = f'"action": "mincutAccept", "mincutClass": 1, "status": "check", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
              f'"fields": {json.dumps(fields)}, "coordinates": {{{coordinates}}}'
     body = utils.create_body(theme, feature=feature, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body, needs_write=True)
 
     return manage_response(result, log, theme)
 
@@ -183,7 +183,7 @@ def change_valve_status():
     coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
     extras = f'"mincutId": "{mincutId}", "usePsectors": "{usePsectors}", "coordinates": {{{coordinates}}}'
     body = utils.create_body(theme, project_epsg=epsg, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setchangevalvestatus', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setchangevalvestatus', body, needs_write=True)
 
     return manage_response(result, log, theme)
 

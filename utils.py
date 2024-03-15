@@ -100,7 +100,7 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
     return response
 
 
-def execute_procedure(log, theme, function_name, parameters=None):
+def execute_procedure(log, theme, function_name, parameters=None, needs_write=False):
     """ Manage execution database function
     :param function_name: Name of function to call (text)
     :param parameters: Parameters for function (json) or (query parameters)
@@ -119,7 +119,7 @@ def execute_procedure(log, theme, function_name, parameters=None):
         sql += f"{parameters}"
     sql += f");"
 
-    db = get_db(theme)
+    db = get_db(theme, needs_write=needs_write)
     execution_msg = sql
     response_msg = ""
     
@@ -142,13 +142,13 @@ def get_config() -> RuntimeConfig:
     config_handler = RuntimeConfig("giswater", app.logger)
     return config_handler.tenant_config(tenant)
 
-def get_db(theme: str = None) -> DatabaseEngine:
+def get_db(theme: str = None, needs_write: bool = False) -> DatabaseEngine:
     logging.basicConfig
     db_url = None
     if theme is not None:
-        db_url = get_db_url_from_theme(theme)
+        db_url = get_db_url_from_theme(theme, needs_write=needs_write)
     if not db_url:
-        db_url = get_config().get("db_url")
+        db_url = get_config().get("db_url_write" if needs_write else "db_url_read")
 
     return DatabaseEngine().db_engine(db_url)
 
@@ -158,10 +158,11 @@ def get_schema_from_theme(theme: str, config: RuntimeConfig) -> Optional[str]:
         return theme_cfg.get("schema")
     return None
 
-def get_db_url_from_theme(theme: str) -> Optional[str]:
+def get_db_url_from_theme(theme: str, needs_write: bool = False) -> Optional[str]:
     theme_cfg = get_config().get("themes").get(theme)
     if theme_cfg is not None:
-        return theme_cfg.get("db_url")
+        print(theme_cfg)
+        return theme_cfg.get("db_url_write" if needs_write else "db_url_read")
     return None
 
 def get_db_layers(theme: str) -> List[str]:

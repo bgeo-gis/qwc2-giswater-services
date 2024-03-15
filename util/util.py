@@ -107,7 +107,7 @@ def setfields():
     fields = json.dumps(fields_dict) if fields_dict else ''
     extras = f'"fields": {fields}'
     body = utils.create_body(theme, feature=feature, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setfields', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setfields', body, needs_write=True)
 
     utils.remove_handlers(log)
 
@@ -131,7 +131,7 @@ def setinitproject():
 
     # db fct
     body = utils.create_body(theme, project_epsg=epsg)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setinitproject', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setinitproject', body, needs_write=True)
 
     utils.remove_handlers(log)
 

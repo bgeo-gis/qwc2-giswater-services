@@ -90,7 +90,7 @@ def profileinfo():
     extras = f'"initNode": {initNode}, "endNode": {endNode}, "linksDistance": "1"'
 
     body = utils.create_body(theme=theme, project_epsg=epsg, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_getprofilevalues', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getprofilevalues', body, needs_write=True)
 
     utils.remove_handlers(log)
     return handle_db_result(result)
@@ -115,7 +115,7 @@ def profilesvg():
     extras = f'"initNode": {initNode}, "endNode": {endNode}, "linksDistance": {vnodeDist}'
 
     body = utils.create_body(theme=theme, project_epsg=epsg, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_getprofilevalues', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getprofilevalues', body, needs_write=True)
     
     utils.remove_handlers(log)
     
