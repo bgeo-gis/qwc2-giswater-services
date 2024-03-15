@@ -1,5 +1,5 @@
 """
-Copyright © 2023 by BGEO. All rights reserved.
+Copyright © 2024 by BGEO. All rights reserved.
 The program is free software: you can redistribute it and/or modify it under the terms of the GNU
 General Public License as published by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -100,11 +100,12 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
     return response
 
 
-def execute_procedure(log, theme, function_name, parameters=None, needs_write=False):
+def execute_procedure(log, theme, function_name, parameters=None, set_role=True, needs_write=False):
     """ Manage execution database function
     :param function_name: Name of function to call (text)
     :param parameters: Parameters for function (json) or (query parameters)
     :param log_sql: Show query in qgis log (bool)
+    :param set_role: Set role in database with the current user
     :return: Response of the function executed (json)
     """
 
@@ -126,7 +127,7 @@ def execute_procedure(log, theme, function_name, parameters=None, needs_write=Fa
     with db.begin() as conn:
         result = dict()
         print(f"SERVER EXECUTION: {sql}\n")
-        conn.execute(text(f"SET ROLE {get_identity()};"))
+        if set_role: conn.execute(text(f"SET ROLE {get_identity()};"))
         result = conn.execute(text(sql)).fetchone()[0]
         response_msg = json.dumps(result)
         if not result or result.get('status') == "Failed":

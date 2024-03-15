@@ -1,5 +1,5 @@
 """
-Copyright © 2023 by BGEO. All rights reserved.
+Copyright © 2024 by BGEO. All rights reserved.
 The program is free software: you can redistribute it and/or modify it under the terms of the GNU
 General Public License as published by the Free Software Foundation, either version 3 of the License,
 or (at your option) any later version.
@@ -27,6 +27,7 @@ from search.search import search_bp
 from toolbox.toolbox import toolbox_bp
 from util.util import util_bp
 from custom_search.custom_search import custom_search_bp
+from parcelfilter.parcelfilter import parcelfilter_bp
 
 import traceback
 import html
@@ -63,6 +64,7 @@ app.register_blueprint(search_bp, url_prefix='/search')
 app.register_blueprint(toolbox_bp, url_prefix='/toolbox')
 app.register_blueprint(util_bp, url_prefix='/util')
 app.register_blueprint(custom_search_bp, url_prefix='/customSearch')
+app.register_blueprint(parcelfilter_bp, url_prefix='/parcelfilter')
 
 # Setup mailer
 def mail_config_from_env(app):
