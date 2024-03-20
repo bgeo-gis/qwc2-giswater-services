@@ -127,7 +127,7 @@ def execute_procedure(log, theme, function_name, parameters=None, set_role=True)
     with db.begin() as conn:
         result = dict()
         print(f"SERVER EXECUTION: {sql}\n")
-        if set_role: conn.execute(text(f"SET ROLE {get_identity()};"))
+        if set_role: conn.execute(text(f"SET ROLE '{get_identity()}';"))
         result = conn.execute(text(sql)).fetchone()[0]
         response_msg = json.dumps(result)
         if not result or result.get('status') == "Failed":
