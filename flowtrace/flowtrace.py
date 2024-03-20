@@ -35,7 +35,7 @@ def upstream():
     coordinates = f'"epsg": {int(epsg)}, "xcoord": {coords[0]}, "ycoord": {coords[1]}, "zoomRatio": {float(zoom)}'
     extras = f'"coordinates": {{{coordinates}}}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_graphanalytics_upstream', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_graphanalytics_upstream', body, needs_write=True)
 
     utils.remove_handlers(log)
 
@@ -62,7 +62,7 @@ def downstream():
     coordinates = f'"epsg": {int(epsg)}, "xcoord": {coords[0]}, "ycoord": {coords[1]}, "zoomRatio": {float(zoom)}'
     extras = f'"coordinates": {{{coordinates}}}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_graphanalytics_downstream', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_graphanalytics_downstream', body, needs_write=True)
 
     utils.remove_handlers(log)
 

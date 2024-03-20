@@ -88,6 +88,6 @@ def setselector():
         extras += f', "id": "{widget_id}", "isAlone": "{isAlone}", "disableParent": "{disableParent}", "value": "{value}"'
 
     body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setselectors', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setselectors', body, needs_write=True)
 
     return make_response(result, theme, config, log)

@@ -114,7 +114,7 @@ def setvisit():
         extras += f', "coordinates": {{"xcoord": {xcoord}, "ycoord": {ycoord}}}'
     body = utils.create_body(theme, project_epsg=epsg, feature=feature, extras=extras)
     print("BODY-------------------------------: ", body)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setvisit', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setvisit', body, needs_write=True)
     """
     sql = f"SELECT {schema}.gw_fct_setvisit({body});"
     log.info(f" Server execution -> {sql}")
@@ -180,7 +180,7 @@ def deletevisit():
     # db fct
     feature= f'"featureType": "visit", "tableName": "om_visit", "id": {visitId}, "idName": "id"'
     body = utils.create_body(theme, feature=feature)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setdelete', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setdelete', body, needs_write=True)
 
     return manage_response(result, log, theme)
 

@@ -94,7 +94,7 @@ def execute_process():
         feature = f'"featureType": "{feature_type}", "tableName": "{table_name}"'
 
     body = utils.create_body(theme, feature=feature, extras=extras)
-    result = utils.execute_procedure(log, theme, function_name, body)
+    result = utils.execute_procedure(log, theme, function_name, body, needs_write=True)
 
     utils.remove_handlers(log)
 

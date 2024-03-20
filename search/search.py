@@ -58,7 +58,7 @@ def setsearch():
     # db fct
     body = utils.create_body(theme, extras=extras)
     print("body: ", body)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setsearch', body)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setsearch', body, needs_write=True)
 
     utils.remove_handlers(log)
 
