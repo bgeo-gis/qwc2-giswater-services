@@ -13,7 +13,7 @@ from sqlalchemy import text, exc
 
 from qwc_services_core.runtime_config import RuntimeConfig
 from qwc_services_core.database import DatabaseEngine
-from qwc_services_core.auth import get_identity
+from qwc_services_core.auth import get_identity, get_username
 
 import os
 import logging
@@ -38,7 +38,7 @@ def create_body(theme, project_epsg=None, form='', feature='', filter_fields='',
         except:
             tiled = False
 
-    client = f'$${{"client":{{"device": 5, "lang": "{lang}", "cur_user": "{str(get_identity())}", "tiled": "{tiled}"'
+    client = f'$${{"client":{{"device": 5, "lang": "{lang}", "cur_user": "{get_username(get_identity())}", "tiled": "{tiled}"'
     if info_type is not None:
         client += f', "infoType": {info_type}'
     if project_epsg is not None:
@@ -127,7 +127,8 @@ def execute_procedure(log, theme, function_name, parameters=None, set_role=True,
     with db.begin() as conn:
         result = dict()
         print(f"SERVER EXECUTION: {sql}\n")
-        if set_role: conn.execute(text(f"SET ROLE '{get_identity()}';"))
+        identity = get_username(get_identity())
+        if set_role: conn.execute(text(f"SET ROLE '{identity}';"))
         result = conn.execute(text(sql)).fetchone()[0]
         response_msg = json.dumps(result)
         if not result or result.get('status') == "Failed":
@@ -218,7 +219,7 @@ def create_log(class_name):
     # Removes previous handlers on root Logger
     remove_handlers()
     # Gets root Logger and add handler
-    logger_name = f"{tenant_handler.tenant()}:{get_identity()}:{class_name.split('.')[-1]}"
+    logger_name = f"{tenant_handler.tenant()}:{get_username(get_identity())}:{class_name.split('.')[-1]}"
     log = logging.getLogger(logger_name)
     # log = logging.getLogger()
     log.addHandler(fileh)
