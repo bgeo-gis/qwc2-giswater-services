@@ -6,7 +6,7 @@ or (at your option) any later version.
 """
 # -*- coding: utf-8 -*-
 
-from typing import Optional, List, Tuple, Dict
+from typing import Optional, List, Tuple, Dict, Callable
 from datetime import date
 from flask import jsonify
 from sqlalchemy import text, exc
@@ -258,13 +258,20 @@ def filter_fields(fields: list, key: str = "web_layoutorder") -> list:
     
     return filtered_fields
 
-def get_fields_xml_vertical(fields: list, lyt_name: str, sort: bool = True):
+def get_fields_xml_vertical(
+        fields: list,
+        lyt_name: str,
+        sort: bool = True,
+        final_spacer: bool = False,
+        sort_key: str = "web_layoutorder",
+        field_callback: Optional[Callable[[dict], None]] = None
+) -> str:
     if sort:
-        fields = filter_fields(fields)
+        fields = filter_fields(fields, sort_key)
     form_xml = f'<layout class="QGridLayout" name="{lyt_name}">'
     for field in fields:
         i = field["web_layoutorder"]
-        label_xml, widget_xml = get_field_xml(field)
+        label_xml, widget_xml = get_field_xml(field, field_callback)
         colspan = 2 if label_xml is None else 1
         column = 0 if label_xml is None else 1
         if label_xml is not None:
@@ -275,6 +282,16 @@ def get_fields_xml_vertical(fields: list, lyt_name: str, sort: bool = True):
         form_xml += (
             f'<item row="{i}" column="{column}" colspan="{colspan}">'
              f'{widget_xml}'
+            f'</item>')
+
+    if final_spacer:
+        form_xml += (
+            f'<item row="{len(fields)}" column="0" colspan="2">'
+             f'<spacer name="spacer">'
+              f'<property name="orientation">'
+               f'<enum>Qt::Vertical</enum>'
+              f'</property>'
+             f'</spacer>'
             f'</item>')
 
     form_xml += '</layout>'
@@ -299,9 +316,12 @@ def get_fields_xml_horizontal(fields: list, lyt_name: str, sort: bool = True):
     form_xml += '</layout>'
     return form_xml
 
-def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
+def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] = None) -> Tuple[Optional[str], str]:
     label_xml = None
     widget_xml = None
+
+    if field_callback is not None:
+        field_callback(field)
 
     widget_type = field['widgettype']
     widget_name = field["columnname"]
@@ -326,6 +346,8 @@ def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
 
     widget_props_xml = ""
     widget_class = None
+
+    widget_props_xml += field.get('widgetprops', '')
 
     read_only = str(not field.get('iseditable', True)).lower()
     widget_props_xml += (
@@ -449,6 +471,14 @@ def get_field_xml(field: dict) -> Tuple[Optional[str], str]:
             f'<property name="text">'
              f'<string>{value}</string>'
             f'</property>')
+    elif widget_type == "label":
+        widget_class = "QLabel"
+        widget_props_xml += (
+            f'<property name="text">'
+             f'<string>{value}</string>'
+            f'</property>')
+    elif widget_type == "divider":
+        widget_class = "Line"
     else:
         widget_class = "QLineEdit"
         widget_props_xml += (

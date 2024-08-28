@@ -63,9 +63,11 @@ def mincut_create_xml_form(result: dict) -> str:
         form_xml += f'<layout class="QVBoxLayout" name="lyt_{tabname}">'
 
         if tabname == 'tab_plan':
-            form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_plan_1", []), "lyt_plan_1")
-            form_xml += '</item>'
+            lyt_plan_fields = fields_per_layout.get("lyt_plan_1", [])
+            if any(field["web_layoutorder"] is not None for field in lyt_plan_fields):
+                form_xml += '<item>'
+                form_xml += get_fields_xml_vertical(lyt_plan_fields, "lyt_plan_1")
+                form_xml += '</item>'
             form_xml += '<item>'
             form_xml += f'<widget class="QGroupBox" name="grb_plan_details">'
             form_xml += f'<property name="title">'

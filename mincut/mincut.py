@@ -33,14 +33,10 @@ def setmincut():
     theme = args.get("theme")
     epsg = args.get("epsg")
     action = args.get("action")
-    xcoord = args.get("xcoord")
-    ycoord = args.get("ycoord")
-    zoomRatio = args.get("zoomRatio")
+    xcoord = args.get("xcoord", "null")
+    ycoord = args.get("ycoord", "null")
+    zoomRatio = args.get("zoomRatio", "null")
     mincutId = args.get("mincutId")
-
-    if xcoord is None:
-        xcoord = "null"
-        ycoord = "null"
     
     theme_conf = utils.get_config().get("themes").get(theme)
     mincut_layer = theme_conf.get("mincut_layer")
@@ -136,23 +132,16 @@ def accept():
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
-    epsg = args.get("epsg")
     mincutId = args.get("mincutId")
     fields = args.get("fields")
     usePsectors = args.get("usePsectors")
-    xcoord = args.get("xcoord")
-    ycoord = args.get("ycoord")
-    zoomRatio = args.get("zoomRatio")
-
-    if xcoord is None:
-        xcoord = "null"
-        ycoord = "null"
 
     # db fct
     feature = f'"featureType": "", "tableName": "om_mincut", "id": {mincutId}'
-    coordinates = f'"epsg": {int(epsg)}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
-    extras = f'"action": "mincutAccept", "mincutClass": 1, "status": "check", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
-             f'"fields": {json.dumps(fields)}, "coordinates": {{{coordinates}}}'
+    extras = (
+        f'"action": "mincutAccept", "mincutClass": 1, "status": "check", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
+        f'"fields": {json.dumps(fields)}'
+    )
     body = utils.create_body(theme, feature=feature, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_setmincut', body, needs_write=True)
 

@@ -71,20 +71,53 @@ def fromid():
     theme = args.get("theme")
     tableName = args.get("tableName")
     feature_id = args.get("id")
+    epaType = args.get("epaType", None)
 
     # db fct
     form = f'"editable": "False"'
     feature = f'"tableName": "{tableName}", "id": "{feature_id}"'
+    if epaType:
+        feature += f', "epaType": "{epaType}"'
+
     body = utils.create_body(theme, form=form, feature=feature)
     result = utils.execute_procedure(log, theme, 'gw_fct_getinfofromid', body)
 
     editable = config.get("themes").get(theme).get("editable", False)
     # form xml
     try:
-        form_xml = create_xml_form(result, editable)
+        if not epaType:
+            form_xml = create_xml_form(result, editable)
+        else:
+            form_xml = create_epa_xml_form(result)
     except Exception as e:
         print(e)
         form_xml = None
+
+    utils.remove_handlers(log)
+
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
+
+
+@info_bp.route('/getinfoplan', methods=['GET'])
+@jwt_required()
+def getinfoplan():
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    tableName = args.get("tableName")
+    featureType = args.get("featureType")
+    idName = args.get("idName")
+    feature_id = args.get("id")
+
+    form = f'"tabName": "tab_plan"'
+    feature = f'"featureType": "{featureType}", "tableName":"{tableName}", "idName":"{idName}", "id":"{feature_id}"'
+    body = utils.create_body(theme, form=form, feature=feature)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getinfoplan', body)
+    
+    form_xml = create_plan_xml_form(result)
 
     utils.remove_handlers(log)
 
@@ -231,12 +264,12 @@ def getdma():
         return jsonify({"schema": schema})
 
     log.info(f" Selected schema -> {str(schema)}")
-    
+
     request_json =  {
         "client": {
             "device": 5, "infoType":1, "lang":"ES"
-        }, 
-        "form": {}, 
+        },
+        "form": {},
         "feature": {
             "tableName" : "v_edit_dma", "id":"1" #Hardcoded
         },
