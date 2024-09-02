@@ -55,26 +55,26 @@ def visit_create_xml_form(result: dict) -> str:
         form_xml += '<attribute name="title">'
         form_xml += f'<string>{tablabel}</string>'
         form_xml += '</attribute>'
-        form_xml += f'<layout class="QVBoxLayout" name="lyt_{tabname}">'
+        form_xml += f'<layout class="QGridLayout" name="lyt_{tabname}">'
 
         if tabname == 'tab_data':
             # Layout 1
-            form_xml += '<item>'
-            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_data_1", []), "lyt_data_1")
+            form_xml += '<item row="0" column="0">'
+            form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_data_1", []), "lyt_data_1", final_spacer=True)
             form_xml += '</item>'
 
             # Layout 2
-            form_xml += '<item>'
+            form_xml += '<item row="1" column="0">'
             form_xml += get_fields_xml_horizontal(fields_per_layout.get("lyt_data_2", []), "lyt_data_2")
             form_xml += '</item>'
         elif tabname == 'tab_file':
             # Layout 1
-            form_xml += '<item>'
+            form_xml += '<item row="0" column="0">'
             form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_files_1", []), "lyt_files_1")
             form_xml += '</item>'
 
             # Layout 2
-            form_xml += '<item>'
+            form_xml += '<item row="1" column="0">'
             form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_files_2", []), "lyt_files_2")
             form_xml += '</item>'
         
