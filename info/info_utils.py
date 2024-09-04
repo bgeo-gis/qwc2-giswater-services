@@ -87,57 +87,11 @@ def full_xml_form(db_result: dict, editable: bool) -> str:
     # form_xml += '</spacer>'
     # form_xml += '</item>'
 
-    form_xml += (
-        '<item row="1" column="0">'
-         '<layout class="QHBoxLayout" name="lyt_buttons">'
-#          '<property name="fit_vertical">'
-#   '<bool>true</bool>'
-#  '</property>'
-          '<item>'
-           '<widget class="QPushButton" name="btn_accept">'
-            '<property name="text">'
-             '<string>Accept</string>'
-            '</property>'
-            '<property name="widgetfunction">'
-             '<string>'
-              '{"functionName": "accept"}'
-             '</string>'
-            '</property>'
-           '</widget>'
-          '</item>'
-          '<item>'
-           '<widget class="QPushButton" name="btn_apply">'
-            '<property name="text">'
-             '<string>Apply</string>'
-            '</property>'
-            '<property name="widgetfunction">'
-             '<string>'
-              '{"functionName": "apply"}'
-             '</string>'
-            '</property>'
-           '</widget>'
-          '</item>'
-          '<item>'
-           '<widget class="QPushButton" name="btn_cancel">'
-            '<property name="text">'
-             '<string>Cancel</string>'
-            '</property>'
-            '<property name="widgetfunction">'
-             '<string>'
-              '{"functionName": "cancel"}'
-             '</string>'
-            '</property>'
-           '</widget>'
-          '</item>'
-         '</layout>'
-        '</item>'
-    )
-
-    # if 'lyt_buttons' in fields_per_layout:
-    #     # Buttons
-    #     form_xml += '<item>'
-    #     form_xml += get_fields_xml_horizontal(fields_per_layout['lyt_buttons'], 'lyt_buttons')
-    #     form_xml += '</item>'
+    if 'lyt_buttons' in fields_per_layout:
+        # Buttons
+        form_xml += '<item row="1" column="0">'
+        form_xml += get_fields_xml_horizontal(fields_per_layout['lyt_buttons'], 'lyt_buttons')
+        form_xml += '</item>'
     
     form_xml += '</layout>'
 
