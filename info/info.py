@@ -7,7 +7,7 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-from .info_utils import create_xml_form
+from .info_utils import create_xml_form, create_plan_xml_form, create_epa_xml_form
 
 import json
 import traceback
@@ -247,7 +247,7 @@ def getdma():
     xcoord = args.get("xcoord")
     ycoord = args.get("ycoord")
     zoomRatio = args.get("zoomRatio")
- 
+
     config = utils.get_config()
     log = utils.create_log(__name__)
     try:
