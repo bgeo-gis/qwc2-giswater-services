@@ -68,10 +68,16 @@ def openmincut():
     theme = args.get("theme")
     mincut_id = args.get("mincutId")
 
+    theme_conf = utils.get_config().get("themes").get(theme)
+
+    mincut_layer = theme_conf.get("mincut_layer")
+    tiled = theme_conf.get("tiled", False) or mincut_layer is None
+
     # db fct
     extras = f'"mincutId": {mincut_id}'
-    body = utils.create_body(theme, extras=extras)
+    body = utils.create_body(theme, extras=extras, tiled=tiled)
     result = utils.execute_procedure(log, theme, 'gw_fct_getmincut', body, needs_write=True)
+    result["body"]["data"]["mincutLayer"] = mincut_layer
 
     return manage_response(result, log, theme)
 
