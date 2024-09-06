@@ -36,10 +36,10 @@ def visit_create_xml_form(result: dict) -> str:
     form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
     form_xml += '<ui version="4.0">'
     form_xml += '<widget class="QWidget" name="dlg_visit">'
-    form_xml += '<layout class="QVBoxLayout" name="MainLayout">'
+    form_xml += '<layout class="QGridLayout" name="MainLayout">'
 
     # Tabs
-    form_xml += '<item>'
+    form_xml += '<item row="0" column="0">'
     form_xml += '<widget class="QTabWidget" name="tabWidget">'
     form_xml += '<property name="currentIndex">'
     form_xml += '<number>0</number>'
@@ -78,12 +78,17 @@ def visit_create_xml_form(result: dict) -> str:
             form_xml += get_fields_xml_vertical(fields_per_layout.get("lyt_files_2", []), "lyt_files_2")
             form_xml += '</item>'
         
-        form_xml += f'</layout>'
-
+        form_xml += '</layout>'
         form_xml += '</widget>'
 
     form_xml += '</widget>'
     form_xml += '</item>'
+
+    form_xml += (
+        '<item row="1" column="0">'
+         f'{get_fields_xml_horizontal(fields_per_layout.get("lyt_buttons", []), "lyt_buttons")}'
+        '</item>'
+    )
 
     form_xml += '</layout>'
     form_xml += '</widget>'

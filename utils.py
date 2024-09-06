@@ -205,7 +205,12 @@ def create_log(class_name):
     # Check if today's direcotry is created
     today_directory = f"{tenant_directory}/{today}"
     if not os.path.exists(today_directory):
-        os.makedirs(today_directory)
+        # This shouldn't be necessary, but somehow the directory magically apears
+        # (only the first time of the day it is created)
+        try:
+            os.makedirs(today_directory)
+        except FileExistsError:
+            print("Directory already exists. wtf")
     
     service_name = os.getcwd().split(os.sep)[-1]
     # Select file name for the log
@@ -240,7 +245,11 @@ def get_fields_per_layout(all_fields: list) -> dict:
 def get_layouts_per_tab(all_fields: list) -> dict:
     layouts_per_tab: Dict[str, set] = {}
     for field in all_fields:
-        layouts_per_tab.setdefault(field.get("tabname"), set()).add(field.get("layoutname"))
+        layout = field.get("layoutname")
+        if layout is not None:
+            layouts_per_tab.setdefault(field.get("tabname"), set()).add(layout)
+        else:
+            print(f"Field {field.get('columnname')} does not have a layout: {field}")
     return layouts_per_tab
 
 def filter_fields(fields: list, key: str = "web_layoutorder") -> list:

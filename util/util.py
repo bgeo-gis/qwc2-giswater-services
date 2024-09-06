@@ -131,7 +131,7 @@ def setinitproject():
 
     # db fct
     body = utils.create_body(theme, project_epsg=epsg)
-    result = utils.execute_procedure(log, theme, 'gw_fct_setinitproject', body, needs_write=True)
+    result = utils.execute_procedure(log, theme, 'gw_fct_setinitproject', body, set_role=False, needs_write=True)
 
     utils.remove_handlers(log)
 
