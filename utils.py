@@ -447,10 +447,12 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
             f'</property>')
     elif widget_type == "button":
         widget_class = "QPushButton"
+        text_value = field.get("valueLabel", value)
         widget_props_xml += (
             f'<property name="text">'
-             f'<string>{value}</string>'
-            f'</property>')
+            f'<string>{text_value}</string>'
+            f'</property>'
+        )
         if (widgetfunction.get("functionName") == "get_info_node"):
             widget_props_xml += (
                 f'<property name="action">'
