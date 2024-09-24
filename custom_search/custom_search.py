@@ -38,7 +38,6 @@ def search():
     searchtables = []; # enter your default searchtable(s) here
     if "searchtables" in request.args:
         searchtables.extend(request.args["searchtables"].split(','))
-    
     querystring = request.args["query"]
     #strip away leading and trailing whitespaces
     querystring = querystring.strip()
@@ -83,7 +82,7 @@ def search():
             #sql += "searchstring_tsvector @@ to_tsquery(\'not_your_language\', %s)"
             #data += (querystrings[j]+":*",)
             # if all tsvector stuff fails you can use this string comparison on the searchstring field
-            sql += "searchstring ILIKE %s"
+            sql += "unaccent(searchstring) ILIKE unaccent(%s)"
             data += ("%" + querystrings[j] + "%",)
 
             if j < querystringsLength - 1:
@@ -92,14 +91,11 @@ def search():
         if i < searchtableLength - 1:
             sql += " UNION "
 
-
     sql += " ORDER BY search_category ASC, displaytext ASC;"
 
 
     db = utils.get_db(theme)
-
     with db.begin() as conn:
-        
         if conn == None:
             return [""]
 
@@ -142,15 +138,11 @@ def searchGeom():
 
     #sanitize
     sql = "SELECT COALESCE(ST_AsText(the_geom), \'nogeom\') AS geom FROM "+searchtable+" WHERE displaytext = %(displaytext)s;"
-    
-    
     result = "nogeom"
-    
     if searchtable != "" and searchtable != "null":
         db = utils.get_db(theme)
 
         with db.begin() as conn:
-            
             if conn == None:
                 return [""]
 
