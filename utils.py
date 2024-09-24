@@ -490,6 +490,24 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
             f'</property>')
     elif widget_type == "divider":
         widget_class = "Line"
+    elif widget_type == "typeahead":
+        widget_class = "QLineEdit"
+        widget_props_xml += (
+            f'<property name="text" >'
+             f'<string>{value}</string>'
+            f'</property>'
+            f'<property name="queryText">'
+             f'<string>{field.get("queryText", "")}</string>'
+            f'</property>'
+            f'<property name="queryTextFilter">'
+             f'<string>{field.get("queryTextFilter", "")}</string>'
+            f'</property>'
+            f'<property name="isTypeahead">'
+             f'<string>true</string>'
+            f'</property>'
+            f'<property name="parentId">'
+             f'<string>{field.get("parentId", "")}</string>'
+            f'</property>')
     else:
         widget_class = "QLineEdit"
         widget_props_xml += (

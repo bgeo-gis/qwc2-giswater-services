@@ -333,3 +333,34 @@ def getlayersfromcoordinates():
     utils.remove_handlers(log)
 
     return utils.create_response(result, do_jsonify=True, theme=theme)
+
+
+
+
+@info_bp.route('/gettypeahead', methods=['GET'])
+@jwt_required()
+def gettypeahead():
+    """Submit query
+
+    Returns typeahead results.
+    """
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    epsg = args.get("epsg")
+    queryText = args.get("queryText")
+    queryTextFilter = args.get("queryTextFilter")
+    parentId = args.get("parentId")
+    textToSearch= args.get("textToSearch")
+
+
+    # db fct
+    extras = f'"queryText": "{queryText}", "queryTextFilter": "{queryTextFilter}", "parentId": "{parentId}", "textToSearch": "{textToSearch}"'
+    body = utils.create_body(theme, project_epsg=epsg, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_gettypeahead', body)
+
+    utils.remove_handlers(log)
+
+    return utils.create_response(result, do_jsonify=True, theme=theme)
