@@ -181,7 +181,7 @@ def parse_layers(request_layers: str, config: RuntimeConfig, theme: str) -> List
     if theme_cfg is not None:
         db_layers = theme_cfg.get("layers")
 
-    for l in request_layers.split(','):
+    for l in request_layers.split(',') + ["*"]:
         if l in db_layers:
             db_layer = db_layers[l]
             if isinstance(db_layer, str):
