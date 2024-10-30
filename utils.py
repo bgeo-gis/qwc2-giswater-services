@@ -594,6 +594,37 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
             f'<property name="parentId">'
              f'<string>{field.get("parentId", "")}</string>'
             f'</property>')
+    elif widget_type == "tabwidget":
+        widget_class = "QTabWidget"
+        widget_props_xml += (
+            f'<property name="currentIndex">'
+             f'<number>0</number>'
+            f'</property>')
+
+        # Manage tabs
+        for tab in field["tabs"]:
+
+            widget_props_xml += (
+                f'<widget class="QWidget" name="{tab["tabName"]}">'
+                f'<attribute name="title">'
+                f'<string>{tab["tabLabel"]}</string>'
+                f'</attribute>')
+
+            widget_props_xml += f'<layout class="QGridLayout" name="lyt_{tab["tabName"]}">'
+            # Manage tab layouts
+            for i, layout in enumerate(tab["layouts"]):
+                widget_props_xml += f'<item row="0" column="{i}">' #TODO: Dedepending on 'horitzontal' or 'vertical' layout config
+                try:
+                    fields_per_layout = get_fields_per_layout(result['body']['data']['fields'])
+                except KeyError as e:
+                    fields_per_layout= {}
+                layout_fields = fields_per_layout.get(layout, [])
+                widget_props_xml += get_fields_xml_vertical(layout_fields, layout)
+                widget_props_xml += f'</item>'
+
+            widget_props_xml += '</layout>'
+            widget_props_xml += '</widget>'
+
     else:
         widget_class = "QLineEdit"
         widget_props_xml += (
