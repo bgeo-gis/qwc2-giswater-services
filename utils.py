@@ -76,7 +76,7 @@ def create_response(db_result=None, form_xml=None, status=None, message=None, do
             response["status"] = "Failed"
             if message:
                 response["message"] = {"level": 2, "text": message}
-            
+
         if do_jsonify:
             response = jsonify(response)
         return response
@@ -123,7 +123,7 @@ def execute_procedure(log, theme, function_name, parameters=None, set_role=True,
     db = get_db(theme, needs_write=needs_write)
     execution_msg = sql
     response_msg = ""
-    
+
     with db.begin() as conn:
         result = dict()
         print(f"SERVER EXECUTION: {sql}\n")
@@ -132,9 +132,9 @@ def execute_procedure(log, theme, function_name, parameters=None, set_role=True,
         result = conn.execute(text(sql)).fetchone()[0]
         response_msg = json.dumps(result)
         if not result or result.get('status') == "Failed":
-            log.warning(f"{execution_msg}|||{response_msg}") 
+            log.warning(f"{execution_msg}|||{response_msg}")
         else:
-            log.info(f"{execution_msg}|||{response_msg}") 
+            log.info(f"{execution_msg}|||{response_msg}")
         print(f"SERVER RESPONSE: {json.dumps(result)}\n")
         return result
 
@@ -201,7 +201,7 @@ def create_log(class_name):
     tenant_directory = f"/var/log/qwc2-giswater-services/{tenant_handler.tenant()}"
     if not os.path.exists(tenant_directory):
         os.makedirs(tenant_directory)
-    
+
     # Check if today's direcotry is created
     today_directory = f"{tenant_directory}/{today}"
     if not os.path.exists(today_directory):
@@ -211,7 +211,7 @@ def create_log(class_name):
             os.makedirs(today_directory)
         except FileExistsError:
             print("Directory already exists. wtf")
-    
+
     service_name = os.getcwd().split(os.sep)[-1]
     # Select file name for the log
     log_file = f"{service_name}_{today}.log"
@@ -242,6 +242,90 @@ def get_fields_per_layout(all_fields: list) -> dict:
         fields_per_layout.setdefault(field['layoutname'], []).append(field)
     return fields_per_layout
 
+# Function to get the layout orientation
+def get_layout_orientation(layout_name, layouts):
+    layout = layouts.get(layout_name, {})
+    # Default to 'vertical' if 'lytOrientation' is not found
+    return layout.get("lytOrientation", "vertical")
+
+
+# ------------------------ XML ------------------------
+def create_xml_generic_form(result: dict, dialog_name, layout_name) -> str:
+    # Get fields per layout
+    fields_per_layout = get_fields_per_layout(result['body']['data']['fields'])
+    # Get layouts for layouts orientation
+    layouts = result["body"]["form"]["layouts"]
+
+    form_xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    form_xml += '<ui version="4.0">\n'
+    form_xml += f'<widget class="QWidget" name="{dialog_name}">\n' # return fromName in db return
+
+    form_xml += '<layout class="QGridLayout" name="MainLayout">'
+
+    layout_index = 1
+    # Process first layout fields
+    while layout_index < 10:
+
+        layout = f'{layout_name}_{layout_index}'
+        layout_orientation = get_layout_orientation(layout, layouts) # Get layout orientation
+        fields = fields_per_layout.get(layout, [])
+        if not fields:
+            break
+
+        # Get the buttons layout
+        form_xml += f'<item row="{layout_index}" column="0">'
+        if layout_orientation == "vertical":
+            form_xml += f'{get_fields_xml_vertical(fields, layout, result=result)}'
+        else:
+            form_xml += f'{get_fields_xml_horizontal(fields, layout, result=result)}'
+        form_xml += '</item>'
+
+        layout_index += 1
+
+
+    # Get the buttons layout
+    lyt_buttons_fields = fields_per_layout.get("lyt_buttons", [])
+    # Add Help button
+    btn_help = {
+        "label": None,
+        "value": "Help",
+        "hidden": False,
+        "tabname": "tab_none",
+        "tooltip": "Help",
+        "datatype": None,
+        "isfilter": False,
+        "isparent": False,
+        "column_id": "btn_help",
+        "columnname": "btn_help",
+        "iseditable": True,
+        "layoutname": "lyt_buttons",
+        "stylesheet": None,
+        "widgetname": "tab_none_btn_help",
+        "widgettype": "button",
+        "isautoupdate": False,
+        "widgetcontrols": {
+            "text": "Help"
+        },
+        "widgetfunction": {
+            "functionName": "help"
+        },
+        "web_layoutorder": 0
+    }
+
+    lyt_buttons_fields.append(btn_help)
+
+    form_xml += (
+        f'<item row="{layout_index}" column="0">'
+         f'{get_fields_xml_horizontal(lyt_buttons_fields, "lyt_buttons")}'
+        '</item>'
+    )
+
+    form_xml += '</layout>'
+    form_xml += '</widget>'
+    form_xml += '</ui>'
+
+    return form_xml
+
 def get_layouts_per_tab(all_fields: list) -> dict:
     layouts_per_tab: Dict[str, set] = {}
     for field in all_fields:
@@ -260,11 +344,12 @@ def filter_fields(fields: list, key: str = "web_layoutorder") -> list:
         if (
             field.get(key) is not None and
             field.get("hidden") not in (True, 'True', 'true')
+
         ):
             field["web_layoutorder"] = i
             filtered_fields.append(field)
             i += 1
-    
+
     return filtered_fields
 
 def get_fields_xml_vertical(
@@ -273,14 +358,15 @@ def get_fields_xml_vertical(
         sort: bool = True,
         final_spacer: bool = False,
         sort_key: str = "web_layoutorder",
-        field_callback: Optional[Callable[[dict], None]] = None
+        field_callback: Optional[Callable[[dict], None]] = None,
+        result: dict = None
 ) -> str:
     if sort:
         fields = filter_fields(fields, sort_key)
     form_xml = f'<layout class="QGridLayout" name="{lyt_name}">'
     for field in fields:
         i = field["web_layoutorder"]
-        label_xml, widget_xml = get_field_xml(field, field_callback)
+        label_xml, widget_xml = get_field_xml(field, field_callback, result=result)
         colspan = 2 if label_xml is None else 1
         column = 0 if label_xml is None else 1
         if label_xml is not None:
@@ -306,12 +392,12 @@ def get_fields_xml_vertical(
     form_xml += '</layout>'
     return form_xml
 
-def get_fields_xml_horizontal(fields: list, lyt_name: str, sort: bool = True):
+def get_fields_xml_horizontal(fields: list, lyt_name: str, sort: bool = True, result: dict = None) -> str:
     if sort:
         fields = filter_fields(fields)
     form_xml = f'<layout class="QHBoxLayout" name="{lyt_name}">'
     for field in fields:
-        label_xml, widget_xml = get_field_xml(field)
+        label_xml, widget_xml = get_field_xml(field, result=result)
         if label_xml is not None:
             form_xml += (
                 f'<item>'
@@ -325,7 +411,7 @@ def get_fields_xml_horizontal(fields: list, lyt_name: str, sort: bool = True):
     form_xml += '</layout>'
     return form_xml
 
-def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] = None) -> Tuple[Optional[str], str]:
+def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] = None, result: Optional[dict] = None) -> Tuple[Optional[str], str]:
     label_xml = None
     widget_xml = None
 
@@ -362,8 +448,8 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
     widget_props_xml += (
         f'<property name="readOnly">'
          f'<bool>{read_only}</bool>'
-        f'</property>')    
-    
+        f'</property>')
+
     required = str(field.get('isMandatory', False)).lower()
     widget_props_xml += (
         f'<property name="required">'
