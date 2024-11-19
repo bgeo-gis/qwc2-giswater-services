@@ -42,15 +42,26 @@ def getlist():
     # Manage filters
     filterFields_dict = {}
     if filterFields not in (None, "", "null", "{}"):
-        filterFields = json.loads(str(filterFields))
-        for k, v in filterFields.items():
-            if v in (None, "", "null"):
-                continue
-            filterFields_dict[v.get("columnname", k)] = {
-                "value": v.get("value"),
-                "filterSign": v.get("filterSign", "=")
-            }
+        if isinstance(filterFields, str):
+            try:
+                filterFields = json.loads(filterFields)
+            except json.JSONDecodeError as e:
+                print("Error at filterFields JSON:", e)
+                filterFields = {}
 
+        if isinstance(filterFields, dict):
+            for k, v in filterFields.items():
+                if isinstance(v, dict) and v.get("value") not in (None, "", "null"):
+                    column_name = v.get("columnname", k)
+                    filterFields_dict[column_name] = {
+                        "value": v.get("value"),
+                        "filterSign": v.get("filterSign", "=")
+                    }
+                elif isinstance(v, str):
+                    filterFields_dict[k] = {
+                        "value": v,
+                        "filterSign": "="
+                    }
     filterFields_dict["limit"] = limit
 
     # db fct
