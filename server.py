@@ -29,6 +29,7 @@ from util.util import util_bp
 from custom_search.custom_search import custom_search_bp
 from parcelfilter.parcelfilter import parcelfilter_bp
 from nonvisual.nonvisual import nonvisual_bp
+from epaselector.epaselector import epaselector_bp
 
 import traceback
 import html
@@ -68,6 +69,7 @@ app.register_blueprint(custom_search_bp, url_prefix='/customSearch')
 app.register_blueprint(parcelfilter_bp, url_prefix='/parcelfilter')
 app.register_blueprint(nonvisual_bp, url_prefix='/nonvisual')
 app.register_blueprint(forward_bp, url_prefix="/forward")
+app.register_blueprint(epaselector_bp, url_prefix='/epaselector')
 # Setup mailer
 def mail_config_from_env(app):
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
