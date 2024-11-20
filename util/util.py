@@ -82,6 +82,15 @@ def getlist():
 
     return utils.create_response(result, do_jsonify=True, theme=theme)
 
+@util_bp.route('/getlayers', methods=['GET'])
+@jwt_required()
+def getlayers():
+    """ Get layers of theme"""
+    # args
+    theme = request.args.get("theme")
+    result = utils.get_config().get("themes").get(theme).get("groups")
+    return utils.create_response(result, do_jsonify=True, theme=theme)
+
 
 @util_bp.route('/setfields', methods=['PUT'])
 @jwt_required()
