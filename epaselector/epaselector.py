@@ -24,7 +24,6 @@ def dialog():
     """
     utils.get_config()
     log = utils.create_log(__name__)
-    utils.remove_handlers(log)
 
     # Retrieve arguments
     args = request.get_json(force=True) if request.is_json else request.args
@@ -43,6 +42,7 @@ def dialog():
     # Create XML form only if combos are not provided
     form_xml = utils.create_xml_generic_form(result, "epa_selector", "lyt_epa_select") if not combos else None
 
+    utils.remove_handlers(log)
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
 
 
@@ -75,7 +75,7 @@ def accept():
 def getcomparethemeid():
     """Returns theme id from Compare Project
     """
-    utils.create_log(__name__)
+    log = utils.create_log(__name__)
 
     # args
     theme = request.args.get("theme")
@@ -87,5 +87,5 @@ def getcomparethemeid():
     tenant = utils.tenant_handler.tenant()
 
     result = { "themeId" : f"{tenant}/{compare_theme}"  }
-
+    utils.remove_handlers(log)
     return utils.create_response(result, do_jsonify=True, theme=theme)
