@@ -26,6 +26,40 @@ api = None
 tenant_handler = None
 mail = None
 
+def create_body_dict(theme, project_epsg=None, form={}, feature={}, filter_fields={}, tiled=None, extras={}) -> str:
+    info_type = 1
+    lang = "es_ES"  # TODO: get from app lang
+    if tiled is None:
+        try:
+            tiled = get_config().get("themes").get(theme).get("tiled", False)
+        except:
+            tiled = False
+
+    client = {
+        "device": 5,
+        "lang": lang,
+        "cur_user": get_username(get_identity()),
+        "tiled": tiled,
+    }
+    if info_type is not None:
+        client["infoType"] = info_type
+    if project_epsg is not None:
+        client["epsg"] = project_epsg
+
+    return json.dumps({
+        "client": client,
+        "form": form,
+        "feature": feature,
+        "filterFields": filter_fields,
+        "pageInfo": {},
+        "data": {
+            **filter_fields,
+            "pageInfo": {},
+            **extras
+        }
+    })
+
+
 def create_body(theme, project_epsg=None, form='', feature='', filter_fields='', tiled=None, extras=None):
     """ Create and return parameters as body to functions"""
 
@@ -309,7 +343,7 @@ def create_xml_generic_form(result: dict, dialog_name, layout_name) -> str:
         "widgetfunction": {
             "functionName": "help"
         },
-        "web_layoutorder": 0
+        "web_layoutorder": 99
     }
 
     lyt_buttons_fields.append(btn_help)
