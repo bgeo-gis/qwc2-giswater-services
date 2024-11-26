@@ -68,7 +68,6 @@ app.register_blueprint(util_bp, url_prefix='/util')
 app.register_blueprint(custom_search_bp, url_prefix='/customSearch')
 app.register_blueprint(parcelfilter_bp, url_prefix='/parcelfilter')
 app.register_blueprint(nonvisual_bp, url_prefix='/nonvisual')
-app.register_blueprint(forward_bp, url_prefix="/forward")
 app.register_blueprint(epaselector_bp, url_prefix='/epaselector')
 # Setup mailer
 def mail_config_from_env(app):
