@@ -7,14 +7,11 @@ or (at your option) any later version.
 # -*- coding: utf-8 -*-
 
 import utils
-import json
-import traceback
-
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, Response
 from flask_jwt_extended import jwt_required
-from qwc_services_core.auth import optional_auth, get_identity
 from sqlalchemy import text, exc
-from .nonvisual_utils import manage_response
+from .nonvisual_utils import manage_response, get_plot_svg
+
 
 nonvisual_bp = Blueprint('nonvisual', __name__)
 
@@ -67,3 +64,19 @@ def getobject():
     result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
 
     return manage_response(result, log, theme, formType, layoutName)
+
+
+
+@nonvisual_bp.route('/plot', methods=['POST'])
+@jwt_required()
+def create_plot():
+    try:
+        # Read JSON
+        data = request.json
+
+        response = get_plot_svg(data);
+
+        return Response(response, mimetype="image/svg+xml")
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
