@@ -27,6 +27,8 @@ def manage_response(result, log, theme, formtype, layoutname):
 def get_plot_svg(data):
     """Generate SVG plot from curve or pattern data """
     is_curve = data.get("curve_type")
+    plot_height = 3
+    plot_width = 3.25
 
     # Check if the plot is a curve or a pattern
     if is_curve and is_curve != 'None':
@@ -73,13 +75,13 @@ def get_plot_svg(data):
             ax.plot(y_list_inverted, x_list, color="blue")
             ax.plot([y_list_inverted[0], y_list[0]], [x_list[0], x_list[0]], color="blue")
             ax.plot([y_list[-1], y_list[-1]], [x_list[0], x_list[-1]], color="grey", alpha=0.5, linestyle="dashed")
-            ax.text(min(y_list_inverted) * 1.1, max(x_list) * 1.07, f"Area: {round(area, 2)} units²", fontsize=8)
+            ax.text(min(y_list_inverted) * 1.09, max(x_list) * 1.06, f"Area: {round(area, 2)} units²", fontsize=8)
 
         else:
             # Default curve plot
             ax.plot(x_list, y_list, color='indianred')
 
-        fig.set_size_inches(3, 3)
+        fig.set_size_inches(plot_width, plot_height)
         return generate_svg(fig)
 
     else:
