@@ -282,6 +282,10 @@ def get_layout_orientation(layout_name, layouts):
     # Default to 'vertical' if 'lytOrientation' is not found
     return layout.get("lytOrientation", "vertical")
 
+def get_form_layout_orientation(dialog_name, layouts):
+    orientation = layouts.get(dialog_name, {})
+    # Default to 'vertical' if 'lytOrientation' is not found
+    return orientation.get("lytOrientation", "vertical")
 
 # ------------------------ XML ------------------------
 def create_xml_generic_form(result: dict, dialog_name, layout_name) -> str:
@@ -306,8 +310,13 @@ def create_xml_generic_form(result: dict, dialog_name, layout_name) -> str:
         if not fields:
             break
 
+        form_layout_orientation = get_form_layout_orientation(dialog_name, layouts)
+        if form_layout_orientation == "horizontal":
+            form_xml += f'<item row="0" column="{layout_index-1}">'
+        else:
+            form_xml += f'<item row="{layout_index}" column="0">'
+
         # Get the buttons layout
-        form_xml += f'<item row="{layout_index}" column="0">'
         if layout_orientation == "vertical":
             form_xml += f'{get_fields_xml_vertical(fields, layout, result=result)}'
         else:
