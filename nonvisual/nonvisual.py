@@ -55,10 +55,10 @@ def getobject():
     formType = args.get("formType")
     layoutName = args.get("layoutName")
     tableName = args.get("tableName")
+    idname = args.get("idname")
     id = args.get("id")
-    idVal = args.get("idVal")
 
-    form = f'"formName":"generic", "formType":"{formType}", "tableName":"{tableName}", "id":"{id}", "idval":"{idVal}"'
+    form = f'"formName":"generic", "formType":"{formType}", "tableName":"{tableName}", "idname":"{idname}", "id":"{id}"'
     # db fct
     body = utils.create_body(theme, form=form)
     result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
