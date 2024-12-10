@@ -462,7 +462,8 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
         field_callback(field)
 
     widget_type = field['widgettype']
-    widget_name = field["columnname"]
+    widget_name = field["widgetname"]
+    widget_columnname = field['columnname']
     value = field.get("value", "")
 
     tooltip = field.get('tooltip')
@@ -497,6 +498,11 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
     widget_props_xml += (
         f'<property name="required">'
          f'<bool>{required}</bool>'
+        f'</property>')
+
+    widget_props_xml += (
+        f'<property name="columnname">'
+         f'<string>{widget_columnname}</string>'
         f'</property>')
 
     def dict_to_str(x: dict) -> str:
