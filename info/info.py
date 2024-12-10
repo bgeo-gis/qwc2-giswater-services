@@ -41,10 +41,12 @@ def fromcoordinates():
 
     layers = utils.parse_layers(layers, config, theme)
 
+    addSchema =  utils.get_config().get("themes").get(theme).get("schema")
+
     # db fct
     form = f'"editable": "False"'
     coordinates = f'"epsg": {int(epsg)}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
-    extras = f'"activeLayer": "{layers[0]}", "visibleLayers": {json.dumps(layers)}, "coordinates": {{{coordinates}}}'
+    extras = f'"activeLayer": "{layers[0]}", "visibleLayers": {json.dumps(layers)}, "coordinates": {{{coordinates}}}, "addSchema": "{addSchema}"'
     body = utils.create_body(theme, form=form, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_getinfofromcoordinates', body)
 
@@ -116,7 +118,6 @@ def getinfoplan():
     feature = f'"featureType": "{featureType}", "tableName":"{tableName}", "idName":"{idName}", "id":"{feature_id}"'
     body = utils.create_body(theme, form=form, feature=feature)
     result = utils.execute_procedure(log, theme, 'gw_fct_getinfoplan', body)
-    
     form_xml = create_plan_xml_form(result)
 
     utils.remove_handlers(log)
@@ -145,6 +146,21 @@ def getlist():
     feature_id = args.get("id")
     filterSign = args.get("filterSign") or "="
     filterFields = args.get("filterFields") or {}
+    # visitClass = args.get("visitClass")
+
+    # if visitClass:
+    #     schema = utils.get_schema_from_theme(theme, config)
+    #     sql = f"SELECT ui_tablename FROM {schema}.config_visit_class WHERE id = {visitClass}"
+    #     try:
+    #         ui_tablename = db.execute(sql).fetchone()
+    #         if ui_tablename is None:
+    #             raise ValueError(f"Table name not found for {visitClass}")
+    #         tableName = ui_tablename[0]
+    #     except Exception as e:
+    #         print(e)
+    #         utils.remove_handlers(log)
+    #         return utils.create_response({"error": str(e)}, status=500, theme=theme)
+
 
     schema = utils.get_schema_from_theme(theme, config)
 
