@@ -86,7 +86,7 @@ def setactive():
 def getdscenario():
     """
     Open Dscenario Dialog
-    Returns a dialog for the dscenario with pre-populated data.
+    Returns a dialog for the dscenario with pre-populated data
     """
     log = utils.create_log(__name__)
 
