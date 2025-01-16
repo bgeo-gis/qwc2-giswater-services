@@ -32,7 +32,7 @@ from nonvisual.nonvisual import nonvisual_bp
 from epaselector.epaselector import epaselector_bp
 from epamanager.epamanager import epamanager_bp
 from workspace.workspace import workspace_bp
-
+from dscenariomanager.dscenariomanager import dscenariomanager_bp
 
 from forward.forward import forward_bp
 
@@ -76,6 +76,7 @@ app.register_blueprint(nonvisual_bp, url_prefix='/nonvisual')
 app.register_blueprint(epaselector_bp, url_prefix='/epaselector')
 app.register_blueprint(epamanager_bp, url_prefix='/epamanager')
 app.register_blueprint(workspace_bp, url_prefix='/workspace')
+app.register_blueprint(dscenariomanager_bp, url_prefix='/dscenariomanager')
 # Setup mailer
 def mail_config_from_env(app):
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
