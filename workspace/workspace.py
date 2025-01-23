@@ -142,7 +142,7 @@ def get_workspace_object():
     layoutName = args.get("layoutName")
     tableName = args.get("tableName")
     id = args.get("id")  # Can be None
-    idVal = args.get("idVal")  # Can be None
+    idName = args.get("idName")  # Can be None
 
     print("ARGS: ", args)
 
@@ -154,23 +154,20 @@ def get_workspace_object():
     ]
     if id:  # Add id only if it is provided
         form_parts.append(f'"id":"{id}"')
-    if idVal:  # Add idVal only if it is provided
-        form_parts.append(f'"idval":"{idVal}"')
+    if idName:  # Add idVal only if it is provided
+        form_parts.append(f'"idname":"{idName}"')
 
     # Join the form parts into the form string
     form = ", ".join(form_parts)
 
     # Create the body and execute the procedure
     body = utils.create_body(theme, form=form)
-    print("REQUEST BODY::::: ", body)
 
     # Execute the procedure to retrieve the workspace dialog data
     result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
 
-    print("RESULT MANAGER::::::::::: ", result)
-
     # Use `manage_response` to dynamically handle `formtype` and `layoutname`
-    return manage_response(result, log, theme, formType, layoutName, idVal)
+    return manage_response(result, log, theme, formType, layoutName, id)
 
 @workspace_bp.route('/setcurrent', methods=['POST'])
 @jwt_required()
@@ -261,6 +258,7 @@ def set_current_workspace():
         return jsonify({
             "status": "Accepted",
             "message": "Workspace set as current and selectors updated successfully.",
+            "geometry": wm_result["body"]["data"]["geometry"],
             "selectors": {
                 "tab_exploitation": selector1_result.get('body', {}),
                 "default_tab": selector2_result.get('body', {})
