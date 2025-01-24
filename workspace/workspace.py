@@ -32,14 +32,9 @@ def dialog():
     formType = args.get("formType", "workspace_manager")  # Default to 'workspace_manager'
     layoutName = args.get("layoutName", "lyt_workspace_mngr")  # Default layout name for workspace_manager
 
-    print("ARGS: ", args)
-    print(f"THEME: {theme}, FORM TYPE: {formType}, LAYOUT NAME: {layoutName}")
-
     # Prepare the form parameter
     form = f'"formName":"generic", "formType":"{formType}"'
     body = utils.create_body(theme, form=form)
-
-    print("REQUEST BODY::::: ", body)
 
     # Execute procedure to get dialog information
     result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
@@ -143,8 +138,6 @@ def get_workspace_object():
     tableName = args.get("tableName")
     id = args.get("id")  # Can be None
     idName = args.get("idName")  # Can be None
-
-    print("ARGS: ", args)
 
     # Dynamically construct the form parameter
     form_parts = [

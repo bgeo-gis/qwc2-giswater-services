@@ -9,11 +9,8 @@ or (at your option) any later version.
 import utils
 
 def manage_response(result, log, theme, formtype, layoutname, id=None):
-    print("MANAGE RESPONSE VALUES TO FORM::::::::::: ", result, log, theme, formtype, layoutname)
     form_xml = utils.create_xml_generic_form(result, formtype, layoutname)
     utils.remove_handlers(log)
-    print("FORM XML WORKSPACE::::::::::: ", form_xml)
-    print("IDDDDDDDD WORKSPACE::::::::::: ", id)
     if id is not None:
         result["id"] = id
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
