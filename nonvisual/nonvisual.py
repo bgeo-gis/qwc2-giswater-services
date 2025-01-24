@@ -65,6 +65,34 @@ def getobject():
 
     return manage_response(result, log, theme, formType, layoutName)
 
+@nonvisual_bp.route('/getlid', methods=['GET'])
+@jwt_required()
+def getlid():
+    """Get LID
+
+    Returns dialog of the selected LID object.
+    """
+    # open dialog
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    formName = args.get("formName")
+    layoutName = args.get("layoutName")
+    tableName = args.get("tableName")
+    idname = args.get("idname")
+    id = args.get("id")
+
+
+    form = f'"formName":"{formName}", "formType":"nvo_lids", "tableName":"{tableName}", "idname":"{idname}", "id":"{id}"'
+    # db fct
+    body = utils.create_body(theme, form=form)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getlid', body, needs_write=True)
+
+    return manage_response(result, log, theme, "nvo_lids", layoutName)
+
 
 
 @nonvisual_bp.route('/plot', methods=['POST'])
