@@ -113,6 +113,6 @@ def getlayersfiltered():
     # db fct
     extras = f'"filter": {json.dumps(filter_columns)}, "layers": {json.dumps(queryLayers)}'
     body = utils.create_body(theme, extras=extras)
-    result = utils.execute_procedure(log, theme, 'gw_fct_getselectorsfiltered', body, needs_write=True)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getlayerstofilter', body, needs_write=True)
 
     return make_response(result, theme, config, log)
