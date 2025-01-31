@@ -60,7 +60,7 @@ def setselector():
     """
     config = utils.get_config()
     log = utils.create_log(__name__)
-    
+
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
@@ -89,5 +89,30 @@ def setselector():
 
     body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
     result = utils.execute_procedure(log, theme, 'gw_fct_setselectors', body, needs_write=True)
+
+    return make_response(result, theme, config, log)
+
+
+@selector_bp.route('/getlayersfiltered', methods=['PUT'])
+@jwt_required()
+def getlayersfiltered():
+    """Get layers filtered
+
+    Returns WMS layers that contain the indicated columns.
+    """
+
+    config = utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    filter_columns = args.get("filter")
+    queryLayers = args.get("queryLayers")
+
+    # db fct
+    extras = f'"filter": {json.dumps(filter_columns)}, "layers": {json.dumps(queryLayers)}'
+    body = utils.create_body(theme, extras=extras)
+    result = utils.execute_procedure(log, theme, 'gw_fct_getselectorsfiltered', body, needs_write=True)
 
     return make_response(result, theme, config, log)
