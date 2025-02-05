@@ -47,7 +47,6 @@ def search():
 
     searchtableLength = len(searchtables)
     querystringsLength = len(querystrings)
-    sql = ""
     errorText = ''
 
     # any searchtable given?
@@ -61,71 +60,69 @@ def search():
 
     #     return [errorText]
 
-    data = ()
-    #for each table
+    data = {}
+    sql = ""
     for i in range(searchtableLength):
-        sql += "SELECT displaytext, '"+searchtables[i]+r"' AS searchtable, search_category, substring(search_category from 4) AS searchcat_trimmed, showlayer, "
-        # the following line is responsible for zooming in to the features
-        # this is supposed to work in PostgreSQL since version 9.0
-        sql += "'['||replace(regexp_replace(BOX2D(the_geom)::text,'BOX\(|\)','','g'),' ',',')||']'::text AS bbox "
-        # if the above line does not work for you, deactivate it and uncomment the next line
-        #sql += "'['||replace(regexp_replace(BOX2D(the_geom)::text,'BOX[(]|[)]','','g'),' ',',')||']'::text AS bbox "
-        sql += "FROM "+searchtables[i]+" WHERE "
-        #for each querystring
-        for j in range(0, querystringsLength):
-            # to implement a search method uncomment the sql and its following data line
-            # for tsvector issues see the docs, use whichever version works best for you
-            # this search does not use the field searchstring_tsvector at all but converts searchstring into a tsvector, its use is discouraged!
-            #sql += "searchstring::tsvector @@ lower(%s)::tsquery"
-            #data += (querystrings[j]+":*",)
-            # this search uses the searchstring_tsvector field, which _must_ have been filled with to_tsvector('not_your_language', 'yourstring')
-            #sql += "searchstring_tsvector @@ to_tsquery(\'not_your_language\', %s)"
-            #data += (querystrings[j]+":*",)
-            # if all tsvector stuff fails you can use this string comparison on the searchstring field
-            sql += "unaccent(searchstring) ILIKE unaccent(%s)"
-            data += ("%" + querystrings[j] + "%",)
+        sql += (
+            "SELECT displaytext, '"
+            + searchtables[i]
+            + r"' AS searchtable, search_category, substring(search_category from 4) AS searchcat_trimmed, showlayer, "
+        )
+        sql += "'['||replace(regexp_replace(BOX2D(the_geom)::text,'BOX\\(|\\)','','g'),' ',',')||']'::text AS bbox "
+        sql += "FROM " + searchtables[i] + " WHERE "
+
+        for j in range(querystringsLength):
+            key = f"query{j}"
+            data[key] = f"%{querystrings[j]}%"
+            sql += f"unaccent(searchstring) ILIKE unaccent(:{key})"
 
             if j < querystringsLength - 1:
                 sql += " AND "
-        #union for next table
+
         if i < searchtableLength - 1:
             sql += " UNION "
 
     sql += " ORDER BY search_category ASC, displaytext ASC;"
-
+    # Convert sql to SQLAlchemy text
+    sql = text(sql)
 
     db = utils.get_db(theme)
     with db.begin() as conn:
         if conn == None:
             return [""]
 
-        if THEMES_CHOOSABLE:
-            selectable = "1"
-            maxBbox = MAX_BBOX
-        else:
-            selectable = "0"
-            maxBbox = None
-
         rowData = []
         result = conn.execute(sql, data)
-        rows = result.fetchall()
+        rows = result.mappings().all()
 
-        lastSearchCategory = '';
+        lastSearchCategory = ''
         for row in rows:
             if lastSearchCategory != row['search_category']:
-                rowData.append({"displaytext":row['searchcat_trimmed'],"searchtable":None,"bbox":maxBbox,"showlayer":row['showlayer'],"selectable":selectable})
+                rowData.append({
+                    "displaytext": row['searchcat_trimmed'],
+                    "searchtable": None,
+                    "bbox": MAX_BBOX,
+                    "showlayer": row['showlayer'],
+                    "selectable": "1" if THEMES_CHOOSABLE else "0"
+                })
                 lastSearchCategory = row['search_category']
-            rowData.append({"displaytext":row['displaytext'],"searchtable":row['searchtable'],"bbox":row['bbox'],"showlayer":row['showlayer'],"selectable":"1"})
-
-        resultString = '{"results": '+json.dumps(rowData)+'}'
-        resultString = resultString.replace('"bbox": "[','"bbox": [')
-        resultString = resultString.replace(']",','],')
+            rowData.append({
+                "displaytext": row['displaytext'],
+                "searchtable": row['searchtable'],
+                "bbox": row['bbox'],
+                "showlayer": row['showlayer'],
+                "selectable": "1"
+            })
+        resultString = '{"results": ' + json.dumps(rowData) + '}'
+        resultString = resultString.replace('"bbox": "[', '"bbox": [').replace(']",', '],')
 
         #we need to add the name of the callback function if the parameter was specified
         if "cb" in request.args:
             resultString = request.args["cb"] + '(' + resultString + ')'
 
-        response = Response(resultString,"200 OK",[("Content-type","application/javascript"),("Content-length", str(len(resultString)) )])
+        response = Response(
+            resultString, "200 OK", [("Content-type", "application/javascript"), ("Content-length", str(len(resultString)))]
+        )
 
         return response
 
@@ -137,7 +134,7 @@ def searchGeom():
     theme = request.args["theme"]
 
     #sanitize
-    sql = "SELECT COALESCE(ST_AsText(the_geom), \'nogeom\') AS geom FROM "+searchtable+" WHERE displaytext = %(displaytext)s;"
+    sql = text("SELECT COALESCE(ST_AsText(the_geom), 'nogeom') AS geom FROM " + searchtable + " WHERE displaytext = :displaytext")
     result = "nogeom"
     if searchtable != "" and searchtable != "null":
         db = utils.get_db(theme)
@@ -146,8 +143,11 @@ def searchGeom():
             if conn == None:
                 return [""]
 
-            row = conn.execute(sql,{'displaytext':displaytext}).fetchone()
-            result = row["geom"]
+            conn = conn.execution_options(stream_results=True)
+
+            row = conn.execute(sql, {'displaytext': displaytext}).fetchone()
+            if row is not None:
+                result = row[0]
 
         response = Response(result,"200 OK",[("Content-type","text/plain"),("Content-length", str(len(result)) )])
         return response
