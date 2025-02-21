@@ -662,13 +662,25 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
             widget_props_xml += f'<layout class="QGridLayout" name="lyt_{tab["tabName"]}">'
             # Manage tab layouts
             for i, layout in enumerate(tab["layouts"]):
-                widget_props_xml += f'<item row="0" column="{i}">' #TODO: Dedepending on 'horitzontal' or 'vertical' layout config
+                # Get tab orientation
+                if isinstance(tab.get("addparam"), dict) and tab["addparam"].get("lytOrientation", "horizontal") == "horizontal":
+                    widget_props_xml += f'<item row="0" column="{i}">'
+                else:
+                    widget_props_xml += f'<item row="{i}" column="0">'
+
                 try:
                     fields_per_layout = get_fields_per_layout(result['body']['data']['fields'])
                 except KeyError as e:
                     fields_per_layout= {}
                 layout_fields = fields_per_layout.get(layout, [])
-                widget_props_xml += get_fields_xml_vertical(layout_fields, layout)
+
+                # Get layout orientation
+                layouts = result["body"]["form"]["layouts"]
+                layout_orientation = get_layout_orientation(layout, layouts)
+                if layout_orientation == "vertical":
+                    widget_props_xml += get_fields_xml_vertical(layout_fields, layout)
+                else:
+                    widget_props_xml += get_fields_xml_horizontal(layout_fields, layout)
                 widget_props_xml += f'</item>'
 
             widget_props_xml += '</layout>'
