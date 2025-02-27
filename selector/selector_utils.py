@@ -11,21 +11,44 @@ import utils
 import logging
 from flask import jsonify, Response
 from qwc_services_core.runtime_config import RuntimeConfig
+from sqlalchemy import text
+from qwc_services_core.auth import get_identity, get_username
+
 
 
 def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
     theme_cfg = config.get("themes").get(theme)
 
-    if theme_cfg.get("tiled"):
+    tiling_cfg = theme_cfg.get("tiling")
+    if theme_cfg.get("tiled") and tiling_cfg is not None:
         layersVisibility = {}
-        
-        for formTab in db_result["body"]["form"]["formTabs"]:
-            if formTab["tabName"] == "tab_exploitation":
-                for field in formTab["fields"]:
-                    expl_config = theme_cfg.get("exploitations")
-                    project_layer = expl_config.get(str(field["expl_id"]))
-                    layersVisibility[project_layer] = field["value"]
-        
+
+        db = utils.get_db(theme, needs_write=False)
+        db_schema = utils.get_schema_from_theme(theme, config)
+        tilecluster_table = tiling_cfg.get("tilecluster_table")
+
+        with db.connect() as conn:
+            identity = get_username(get_identity())
+            active = conn.execute(text(f"""
+                SET ROLE {identity};
+                SELECT * FROM (SELECT 0 AS id, array_agg(expl_id) AS expls FROM {db_schema}.selector_expl WHERE cur_user = current_user) e
+                NATURAL JOIN  (SELECT 0 AS id, array_agg(sector_id) AS sectors FROM {db_schema}.selector_sector WHERE cur_user = current_user) s
+                NATURAL JOIN  (SELECT 0 AS id, array_agg(state_id) AS states FROM {db_schema}.selector_state WHERE cur_user = current_user) st;
+            """)).fetchone()
+            print("Active", active)
+            if active is None:
+                active = (0, [], [], [])
+
+            data = conn.execute(text(f"SELECT tilecluster_id, expl_id, sector_id, state FROM {tilecluster_table}")).fetchall()
+
+        layersVisibility = {
+            x[0]: (
+                x[1] in active[1]
+                and x[2] in active[2]
+                and x[3] in active[3]
+            ) for x in data
+        }
+
         db_result["body"]["data"]["layersVisibility"] = layersVisibility
 
     # form xml
@@ -65,7 +88,7 @@ def create_xml_form_v3(db_result: dict) -> str:
         form_xml += '</widget>\n'
 
     form_xml += '</widget>'
-    form_xml += '</item>'  
+    form_xml += '</item>'
     form_xml += '</layout>'
     form_xml += '</widget>'
     form_xml += '</ui>'
@@ -92,7 +115,7 @@ def set_tab_xml(fields, tab_name, manage_all, selector_type):
             value = field["value"]
             if value is False:
                 all_checked = False
-        
+
         widget_type = field["type"]
         widget_name = field["widgetname"]
 
@@ -104,7 +127,7 @@ def set_tab_xml(fields, tab_name, manage_all, selector_type):
         tab_xml += '</widget>'
         tab_xml += '</item>'
         tab_xml += f'<item row="{row}" column="1">'
-        
+
         if widget_type == "check":
             tab_xml += f'<widget class="QCheckBox" name="{widget_name}">'
             tab_xml += f'<property name="checked">'
