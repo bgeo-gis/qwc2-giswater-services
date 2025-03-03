@@ -302,7 +302,7 @@ def create_xml_generic_form(result: dict, dialog_name, layout_name) -> str:
 
     layout_index = 1
     # Process first layout fields
-    while layout_index < 10:
+    while layout_index < 15:
 
         layout = f'{layout_name}_{layout_index}'
         layout_orientation = get_layout_orientation(layout, layouts) # Get layout orientation
@@ -651,7 +651,9 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
             f'</property>')
 
         # Manage tabs
-        for tab in field["tabs"]:
+        tabname = f"tabs_{field['columnname']}" if field.get(f"tabs_{field['columnname']}") else "tabs"
+
+        for tab in field[tabname]:
 
             widget_props_xml += (
                 f'<widget class="QWidget" name="{tab["tabName"]}">'
@@ -678,9 +680,9 @@ def get_field_xml(field: dict, field_callback: Optional[Callable[[dict], None]] 
                 layouts = result["body"]["form"]["layouts"]
                 layout_orientation = get_layout_orientation(layout, layouts)
                 if layout_orientation == "vertical":
-                    widget_props_xml += get_fields_xml_vertical(layout_fields, layout)
+                    widget_props_xml += get_fields_xml_vertical(layout_fields, layout, result=result)
                 else:
-                    widget_props_xml += get_fields_xml_horizontal(layout_fields, layout)
+                    widget_props_xml += get_fields_xml_horizontal(layout_fields, layout, result=result)
                 widget_props_xml += f'</item>'
 
             widget_props_xml += '</layout>'
