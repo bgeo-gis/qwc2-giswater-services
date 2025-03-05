@@ -15,29 +15,6 @@ from flask_jwt_extended import jwt_required
 
 dscenariomanager_bp = Blueprint('dscenariomanager', __name__)
 
-@dscenariomanager_bp.route('/dialog', methods=['GET'])
-@jwt_required()
-def dialog():
-    """Open Epa Results Management
-
-    Returns dialog of the epa results management.
-    """
-    # open dialog
-    utils.get_config()
-    log = utils.create_log(__name__)
-
-    # args
-    args = request.get_json(force=True) if request.is_json else request.args
-    theme = args.get("theme")
-
-    # db fct
-    form = '"formName":"generic", "formType":"dscenario_manager"'
-    body = utils.create_body(theme, form=form)
-
-    result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
-    utils.remove_handlers(log)
-    return manage_response(result, log, theme, "dscenario_manager", "lyt_dscenario_mngr")
-
 
 @dscenariomanager_bp.route('/delete', methods=['DELETE'])
 @jwt_required()
@@ -80,40 +57,3 @@ def setactive():
     result = utils.execute_procedure(log, theme, 'gw_fct_setfields', body, needs_write=True)
     utils.remove_handlers(log)
     return utils.create_response(result, theme=theme)
-
-@dscenariomanager_bp.route('/getdscenario', methods=['GET'])
-@jwt_required()
-def getdscenario():
-    """
-    Open Dscenario Dialog
-    Returns a dialog for the dscenario with pre-populated data
-    """
-    log = utils.create_log(__name__)
-
-    # Get request arguments
-    args = request.get_json(force=True) if request.is_json else request.args
-    theme = args.get("theme")
-    formType = args.get("formType")
-    layoutName = args.get("layoutName")
-    idName = args.get("idName")
-    id = args.get("id")
-
-    # Dynamically construct the form parameter
-    form_parts = [
-        f'"formName":"generic"',
-        f'"formType":"{formType}"',
-        f'"idname":"{idName}"',
-        f'"id":"{id}"'
-    ]
-
-    # Join the form parts into the form string
-    form = ", ".join(form_parts)
-
-    # Create the body and execute the procedure
-    body = utils.create_body(theme, form=form)
-
-    # Execute the procedure to retrieve the workspace dialog data
-    result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
-
-    # Use `manage_response` to dynamically handle `formtype` and `layoutname`
-    return manage_response(result, log, theme, formType, layoutName)

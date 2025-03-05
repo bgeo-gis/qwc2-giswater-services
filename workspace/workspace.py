@@ -15,33 +15,6 @@ from .workspace_utils import manage_response, fill_tab_log
 
 workspace_bp = Blueprint('workspace', __name__)
 
-@workspace_bp.route('/dialog', methods=['GET'])
-@jwt_required()
-def dialog():
-    """
-    Open Workspace Management Dialog
-
-    Returns dialog of the Workspace management, dynamically handling `formType` and `layoutName`.
-    """
-    utils.get_config()
-    log = utils.create_log(__name__)
-
-    # Get request arguments
-    args = request.get_json(force=True) if request.is_json else request.args
-    theme = args.get("theme")
-    formType = args.get("formType", "workspace_manager")  # Default to 'workspace_manager'
-    layoutName = args.get("layoutName", "lyt_workspace_mngr")  # Default layout name for workspace_manager
-
-    # Prepare the form parameter
-    form = f'"formName":"generic", "formType":"{formType}"'
-    body = utils.create_body(theme, form=form)
-
-    # Execute procedure to get dialog information
-    result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
-
-    # Use `manage_response` to dynamically handle the form and layout
-    return manage_response(result, log, theme, formType, layoutName)
-
 
 @workspace_bp.route('/manage', methods=['POST'])
 @jwt_required()
