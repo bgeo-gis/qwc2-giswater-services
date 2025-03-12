@@ -210,10 +210,16 @@ def get_db_layers(theme: str) -> List[str]:
 
 def parse_layers(request_layers: str, config: RuntimeConfig, theme: str) -> List[str]:
     layers = []
-    db_layers = []
-    theme_cfg = config.get("themes").get(theme)
-    if theme_cfg is not None:
-        db_layers = theme_cfg.get("layers")
+    theme_cfg = config.get("themes", {}).get(theme)
+
+    if not theme_cfg:
+        return layers  # Return empty list if theme not found
+
+    # Check if the theme is tiled
+    if theme_cfg.get("tiled", False):
+        return theme_cfg.get("tiled_layers", [])
+
+    db_layers = theme_cfg.get("layers", {})
 
     for l in request_layers.split(',') + ["*"]:
         if l in db_layers:
@@ -221,9 +227,9 @@ def parse_layers(request_layers: str, config: RuntimeConfig, theme: str) -> List
             if isinstance(db_layer, str):
                 layers.append(db_layer)
             elif isinstance(db_layer, list):
-                layers += db_layer
-    return layers
+                layers.extend(db_layer)
 
+    return layers
 
 # Create log pointer
 def create_log(class_name):
