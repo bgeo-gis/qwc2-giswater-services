@@ -34,7 +34,7 @@ from epamanager.epamanager import epamanager_bp
 from workspace.workspace import workspace_bp
 from dscenariomanager.dscenariomanager import dscenariomanager_bp
 
-from forward.forward import forward_bp
+# from forward.forward import forward_bp
 
 import traceback
 import html
