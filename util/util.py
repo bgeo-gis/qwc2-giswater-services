@@ -156,3 +156,42 @@ def setinitproject():
     utils.remove_handlers(log)
 
     return utils.create_response(result, do_jsonify=True, theme=theme)
+
+@util_bp.route('/dialog', methods=['GET'])
+@jwt_required()
+def dialog():
+    """Open Dialog
+
+    Returns XML structure dialog.
+    """
+    # open dialog
+    utils.get_config()
+    log = utils.create_log(__name__)
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    dialog_name = args.get("dialogName")
+    layout_name = args.get("layoutName")
+
+    # db fct
+    form = f'"formName":"generic", "formType":"{dialog_name}"'
+
+    if args.get("idName") is not None:
+        form += f', "idname":"{args.get("idName")}"'
+
+    if args.get("id") is not None:
+        form += f', "id":"{args.get("id")}"'
+
+    if args.get("tableName") is not None:
+        form += f', "tableName":"{args.get("tableName")}"'
+
+
+    body = utils.create_body(theme, form=form)
+
+    result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
+    utils.remove_handlers(log)
+    form_xml = utils.create_xml_generic_form(result, dialog_name, layout_name)
+    return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
+
+
