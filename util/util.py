@@ -11,7 +11,7 @@ import traceback
 
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required
-from qwc_services_core.auth import optional_auth, get_identity
+from qwc_services_core.auth import optional_auth, get_identity, get_username
 from sqlalchemy import text, exc
 
 
@@ -195,3 +195,79 @@ def dialog():
     return utils.create_response(result, form_xml=form_xml, do_jsonify=True, theme=theme)
 
 
+@util_bp.route('/getfilters', methods=['GET'])
+@jwt_required()
+def getfilters():
+
+    # args
+    args = request.get_json(force=True) if request.is_json else request.args
+    theme = args.get("theme")
+    schema_name = utils.get_schema_from_theme(theme, utils.get_config())
+    db = utils.get_db(theme, needs_write=True)
+
+    with db.begin() as conn:
+        sector_options = dict()
+        identity = get_username(get_identity())
+        conn.execute(text(f"SET ROLE '{identity}';"))
+
+        # Get basic_selector_options param
+        sql = f"SELECT value FROM {schema_name}.config_param_system WHERE parameter = 'basic_selector_options'"
+        sector_options = conn.execute(text(sql)).fetchone()[0]
+
+    json_options = json.loads(sector_options)
+
+    print("json_options: ", json_options)
+
+    muni_option = json_options.get('muniClientFilter', False)
+    sector_option = json_options.get('sectorClientFilter', False)
+
+    # Build and Apply filters
+    muni_filter, sector_filter = _build_filter(theme)
+
+    # Create a dict to manage filters
+    filters = {
+        "muni_filter": muni_filter if muni_option and muni_filter else None,
+        "sector_filter": sector_filter if sector_option and sector_filter else None,
+    }
+    return filters
+
+def _build_filter(theme):
+
+    log = utils.create_log(__name__)
+
+    # Call get_selectors
+    extras = f'"selectorType":"selector_basic", "filterText":""'
+    body = utils.create_body(theme,extras=extras)
+    json_result = utils.execute_procedure(log,theme,'gw_fct_getselectors', body, set_role=False, needs_write=True)
+
+    muni_filter = []
+    sector_filter = []
+
+    if json_result is not None:
+        try:
+            form_tabs = json_result.get('body', {}).get('form', {}).get('formTabs', [])
+            for selector in form_tabs:
+                if selector.get('tableName') == 'selector_municipality':
+                    filter = []
+                    for field in selector.get('fields', []):
+                        if field.get('value'):
+                            column_name = field.get('columnname')
+                            if column_name:
+                                filter.append(field[column_name])
+                    if filter:
+                        muni_filter = filter
+
+                elif selector.get('tableName') == 'selector_sector':
+                    filter = []
+                    for field in selector.get('fields', []):
+                        if field.get('value'):
+                            column_name = field.get('columnname')
+                            if column_name:
+                                filter.append(field[column_name])
+                    if filter:
+                        sector_filter = filter
+
+        except KeyError as e:
+            print(f"KeyError encountered: {e}")
+
+    return muni_filter, sector_filter
