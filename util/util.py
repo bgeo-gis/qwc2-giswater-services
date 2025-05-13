@@ -212,7 +212,8 @@ def getfilters():
 
         # Get basic_selector_options param
         sql = f"SELECT value FROM {schema_name}.config_param_system WHERE parameter = 'basic_selector_options'"
-        sector_options = conn.execute(text(sql)).fetchone()[0]
+        result = conn.execute(text(sql)).fetchone()
+        sector_options = result[0] if result else '{}'
 
     json_options = json.loads(sector_options)
 
