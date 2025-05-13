@@ -38,14 +38,22 @@ def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
             print("Active", active)
             if active is None:
                 active = (0, [], [], [])
+            else:
+                # Ensure all lists are initialized, even if they're None from the database
+                active = (
+                    active[0],
+                    active[1] if active[1] is not None else [],
+                    active[2] if active[2] is not None else [],
+                    active[3] if active[3] is not None else []
+                )
 
             data = conn.execute(text(f"SELECT tilecluster_id, expl_id, sector_id, state FROM {tilecluster_table}")).fetchall()
 
         layersVisibility = {
             x[0]: (
-                x[1] in active[1]
-                and x[2] in active[2]
-                and x[3] in active[3]
+                (x[1] is not None and x[1] in active[1])
+                and (x[2] is not None and x[2] in active[2])
+                and (x[3] is not None and x[3] in active[3])
             ) for x in data
         }
 
