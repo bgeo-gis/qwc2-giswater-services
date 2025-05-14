@@ -145,7 +145,7 @@ def accept():
     # db fct
     feature = f'"featureType": "", "tableName": "om_mincut", "id": {mincutId}'
     extras = (
-        f'"action": "mincutAccept", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
+        f'"action": "mincutAccept", "mincutId": {mincutId}, "status": "check", "usePsectors": "{usePsectors}", ' \
         f'"fields": {json.dumps(fields)}'
     )
     body = utils.create_body(theme, feature=feature, extras=extras)
