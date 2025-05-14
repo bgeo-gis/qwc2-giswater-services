@@ -44,7 +44,7 @@ def setmincut():
     tiled = theme_conf.get("tiled", False) or mincut_layer is None
     # db fct
     coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
-    extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
+    extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}, "status": "check"'
     if mincutId is not None:
         extras += f', "mincutId": {mincutId}'
     body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
