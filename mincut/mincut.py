@@ -37,14 +37,14 @@ def setmincut():
     ycoord = args.get("ycoord", "null")
     zoomRatio = args.get("zoomRatio", "null")
     mincutId = args.get("mincutId")
-    
+
     theme_conf = utils.get_config().get("themes").get(theme)
     mincut_layer = theme_conf.get("mincut_layer")
-    
+
     tiled = theme_conf.get("tiled", False) or mincut_layer is None
     # db fct
     coordinates = f'"epsg": {epsg}, "xcoord": {xcoord}, "ycoord": {ycoord}, "zoomRatio": {zoomRatio}'
-    extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}, "status": "check"'
+    extras = f'"action": "{action}", "usePsectors": "False", "coordinates": {{{coordinates}}}'
     if mincutId is not None:
         extras += f', "mincutId": {mincutId}'
     body = utils.create_body(theme, project_epsg=epsg, extras=extras, tiled=tiled)
@@ -145,7 +145,7 @@ def accept():
     # db fct
     feature = f'"featureType": "", "tableName": "om_mincut", "id": {mincutId}'
     extras = (
-        f'"action": "mincutAccept", "mincutClass": 1, "status": "check", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
+        f'"action": "mincutAccept", "mincutId": {mincutId}, "usePsectors": "{usePsectors}", ' \
         f'"fields": {json.dumps(fields)}'
     )
     body = utils.create_body(theme, feature=feature, extras=extras)
