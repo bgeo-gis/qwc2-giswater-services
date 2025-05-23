@@ -38,9 +38,11 @@ def getselector():
     selectorType = args.get("selectorType")
     ids = args.get("ids")
 
+    addSchema = config.get("themes").get(theme).get("addSchema") or "NULL"
+
     # db fct
     form = f'"currentTab": "{currentTab}"'
-    extras = f'"selectorType": "{selectorType}", "filterText": ""'
+    extras = f'"selectorType": "{selectorType}", "filterText": "", "addSchema": "{addSchema}"'
     if ids:
         ids = ids.split(",")
         ids_list = [int(x) for x in ids]
@@ -71,8 +73,9 @@ def setselector():
     widget_id = args.get("id")
     isAlone = args.get("isAlone")
     disableParent = args.get("disableParent")
-    addSchema = args.get("addSchema")
     ids = args.get("ids")
+
+    addSchema = config.get("themes").get(theme).get("addSchema") or "NULL"
 
     theme_conf = utils.get_config().get("themes").get(theme)
     tiled = theme_conf.get("tiled", False)

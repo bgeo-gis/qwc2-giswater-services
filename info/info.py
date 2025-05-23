@@ -41,7 +41,7 @@ def fromcoordinates():
 
     layers = utils.parse_layers(layers, config, theme)
 
-    addSchema =  utils.get_config().get("themes").get(theme).get("schema")
+    addSchema = config.get("themes").get(theme).get("addSchema") or config.get("themes").get(theme).get("schema")
 
     # db fct
     form = f'"editable": "False"'

@@ -25,15 +25,20 @@ def getsearch():
     Get current user's search results.
     """
     log = utils.create_log(__name__)
+    config = utils.get_config()
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     filterFields = args.get("filterFields")
-    
-    # db fct
-    body = utils.create_body(theme, filter_fields=filterFields)
 
+    # Get addSchema from config if it exists
+    addSchema = config.get("themes", {}).get(theme, {}).get("addSchema")
+    extras = f'"addSchema": "{addSchema}"' if addSchema else None
+
+    # db fct
+    body = utils.create_body(theme, filter_fields=filterFields, extras=extras)
+    print("body: ", body)
     result = utils.execute_procedure(log, theme, 'gw_fct_getsearch', body)
 
     utils.remove_handlers(log)
@@ -48,12 +53,19 @@ def setsearch():
     Calls gw_fct_set_new_search.
     """
     log = utils.create_log(__name__)
+    config = utils.get_config()
+
 
     # args
     args = request.get_json(force=True) if request.is_json else request.args
     theme = args.get("theme")
     extras = args.get("extras")
     print("extras: ", extras)
+
+    # Get addSchema from config if it exists
+    addSchema = config.get("themes", {}).get(theme, {}).get("addSchema")
+    if addSchema:
+        extras += f',"addSchema": "{addSchema}"'
 
     # db fct
     body = utils.create_body(theme, extras=extras)
