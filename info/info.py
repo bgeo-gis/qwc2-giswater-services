@@ -369,11 +369,12 @@ def gettypeahead():
     queryText = args.get("queryText")
     queryTextFilter = args.get("queryTextFilter")
     parentId = args.get("parentId")
+    parentValue = args.get("parentValue")
     textToSearch= args.get("textToSearch")
 
 
     # db fct
-    extras = f'"queryText": "{queryText}", "queryTextFilter": "{queryTextFilter}", "parentId": "{parentId}", "textToSearch": "{textToSearch}"'
+    extras = f'"queryText": "{queryText}", "queryTextFilter": "{queryTextFilter}", "parentId": "{parentId}", "parentValue": "{parentValue}", "textToSearch": "{textToSearch}"'
     body = utils.create_body(theme, project_epsg=epsg, extras=extras)
     result = utils.execute_procedure(log, theme, 'gw_fct_gettypeahead', body)
 
