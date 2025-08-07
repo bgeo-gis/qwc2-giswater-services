@@ -13,7 +13,7 @@ from flask import jsonify, Response
 from qwc_services_core.runtime_config import RuntimeConfig
 from sqlalchemy import text
 from qwc_services_core.auth import get_identity, get_username
-
+from dataclasses import dataclass
 
 
 def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
@@ -31,31 +31,45 @@ def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
             identity = get_username(get_identity())
             active = conn.execute(text(f"""
                 SET ROLE {identity};
-                SELECT * FROM (SELECT 0 AS id, array_agg(expl_id) AS expls FROM {db_schema}.selector_expl WHERE cur_user = current_user) e
+                SELECT * FROM  (SELECT 0 AS id, array_agg(network_id) AS networks FROM {db_schema}.selector_network WHERE cur_user = current_user) n
+                NATURAL JOIN (SELECT 0 AS id, array_agg(muni_id) AS munis FROM {db_schema}.selector_municipality WHERE cur_user = current_user) m
+                NATURAL JOIN (SELECT 0 AS id, array_agg(expl_id) AS expls FROM {db_schema}.selector_expl WHERE cur_user = current_user) e
                 NATURAL JOIN  (SELECT 0 AS id, array_agg(sector_id) AS sectors FROM {db_schema}.selector_sector WHERE cur_user = current_user) s
                 NATURAL JOIN  (SELECT 0 AS id, array_agg(state_id) AS states FROM {db_schema}.selector_state WHERE cur_user = current_user) st;
             """)).fetchone()
-            print("Active", active)
+
+            print(active)
+
             if active is None:
-                active = (0, [], [], [])
+                print("WARNING: selectors returned None!")
+                active = { "N": [], "M": [], "E": [], "S": [], "T": [] }
             else:
                 # Ensure all lists are initialized, even if they're None from the database
-                active = (
-                    active[0],
-                    active[1] if active[1] is not None else [],
-                    active[2] if active[2] is not None else [],
-                    active[3] if active[3] is not None else []
-                )
+                active = {
+                    "N": active[1] if active[1] is not None else [],
+                    "M": active[2] if active[2] is not None else [],
+                    "E": active[3] if active[3] is not None else [],
+                    "S": active[4] if active[4] is not None else [],
+                    "T": active[5] if active[5] is not None else [],
+                }
 
-            data = conn.execute(text(f"SELECT tilecluster_id, expl_id, sector_id, state FROM {tilecluster_table}")).fetchall()
+            data = conn.execute(text(f"SELECT tilecluster_id FROM {tilecluster_table}")).fetchall()
 
-        layersVisibility = {
-            x[0]: (
-                (x[1] is not None and x[1] in active[1])
-                and (x[2] is not None and x[2] in active[2])
-                and (x[3] is not None and x[3] in active[3])
-            ) for x in data
-        }
+        layersVisibility = {}
+        for tilecluster_id, in data:
+            visible = True
+            for part in tilecluster_id.split("-"):
+                mapzone_name_id = part[0]
+                mapzone_id = part[1:]
+
+                if mapzone_name_id not in active:
+                    raise ValueError(f"Invalid mapzone name: {mapzone_name_id}")
+
+                if int(mapzone_id) not in active[mapzone_name_id]:
+                    visible = False
+                    break
+
+            layersVisibility[tilecluster_id] = visible
 
         db_result["body"]["data"]["layersVisibility"] = layersVisibility
 
