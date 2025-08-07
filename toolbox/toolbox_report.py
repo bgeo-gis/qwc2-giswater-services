@@ -40,7 +40,11 @@ def create_xml_form(function: dict, parent_vals: dict) -> str:
             "table": {
                 "initialState": {
                     "density": "compact"
-                }
+                },
+                "enableMultiRowSelection": True,
+                "multipleRowSelection": True,
+                "enableRowSelection": True,
+                "enableSelectAll": True
             }
         }
     form_xml = f"""
