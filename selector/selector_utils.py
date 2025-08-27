@@ -16,11 +16,12 @@ from qwc_services_core.auth import get_identity, get_username
 from dataclasses import dataclass
 
 TABNAME_MAP = {
-    "tab_network": "N",
-    "tab_municipality": "M",
-    "tab_exploitation": "E",
-    "tab_sector": "S",
-    "tab_network_state": "T"
+    "tab_network": ("N", "network_id"),
+    "tab_municipality": ("M", "muni_id"),
+    "tab_exploitation": ("E", "expl_id"),
+    "tab_exploitation_add": ("E", "expl_id"),
+    "tab_sector": ("S", "sector_id"),
+    "tab_network_state": ("T", "id")
 }
 
 def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
@@ -35,10 +36,13 @@ def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
 
         active = { "N": [], "M": [], "E": [], "S": [], "T": [] }
         for tab in db_result["body"]["form"]["formTabs"]:
-            if id := TABNAME_MAP.get(tab["tabName"]):
+            if data := TABNAME_MAP.get(tab["tabName"]):
+                id, id_name = data
                 for item in tab["fields"]:
                     if item["value"] == True:
-                        active[id].append(item["name"])
+                        active[id].append(item[id_name])
+
+        print(active)
 
         with db.connect() as conn:
             data = conn.execute(text(f"SELECT tilecluster_id FROM {tilecluster_table}")).fetchall()
