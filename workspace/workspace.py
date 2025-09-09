@@ -94,47 +94,6 @@ def manage_workspace():
     return utils.create_response(result_data, theme=theme)
 
 
-@workspace_bp.route('/getworkspaceobject', methods=['GET'])
-@jwt_required()
-def get_workspace_object():
-    """
-    Open Workspace Object Dialog
-    Returns a dialog for the workspace object with pre-populated data.
-    """
-    log = utils.create_log(__name__)
-
-    # Get request arguments
-    args = request.get_json(force=True) if request.is_json else request.args
-    theme = args.get("theme")
-    formType = args.get("formType")
-    layoutName = args.get("layoutName")
-    tableName = args.get("tableName")
-    id = args.get("id")  # Can be None
-    idName = args.get("idName")  # Can be None
-
-    # Dynamically construct the form parameter
-    form_parts = [
-        f'"formName":"generic"',
-        f'"formType":"{formType}"',
-        f'"tableName":"{tableName}"',
-    ]
-    if id:  # Add id only if it is provided
-        form_parts.append(f'"id":"{id}"')
-    if idName:  # Add idVal only if it is provided
-        form_parts.append(f'"idname":"{idName}"')
-
-    # Join the form parts into the form string
-    form = ", ".join(form_parts)
-
-    # Create the body and execute the procedure
-    body = utils.create_body(theme, form=form)
-
-    # Execute the procedure to retrieve the workspace dialog data
-    result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
-
-    # Use `manage_response` to dynamically handle `formtype` and `layoutname`
-    return manage_response(result, log, theme, formType, layoutName, id)
-
 @workspace_bp.route('/setcurrent', methods=['POST'])
 @jwt_required()
 def set_current_workspace():

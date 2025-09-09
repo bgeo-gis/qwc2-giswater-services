@@ -33,6 +33,7 @@ from epaselector.epaselector import epaselector_bp
 from epamanager.epamanager import epamanager_bp
 from workspace.workspace import workspace_bp
 from dscenariomanager.dscenariomanager import dscenariomanager_bp
+from psectormanager.psectormanager import psectormanager_bp
 
 # from forward.forward import forward_bp
 
@@ -77,6 +78,7 @@ app.register_blueprint(epaselector_bp, url_prefix='/epaselector')
 app.register_blueprint(epamanager_bp, url_prefix='/epamanager')
 app.register_blueprint(workspace_bp, url_prefix='/workspace')
 app.register_blueprint(dscenariomanager_bp, url_prefix='/dscenariomanager')
+app.register_blueprint(psectormanager_bp, url_prefix='/psectormanager')
 # Setup mailer
 def mail_config_from_env(app):
     app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER')
@@ -96,13 +98,13 @@ try:
 except Exception as e:
     print(f"Excepcion===: {str(e)}")
 
-print("------------------------------------")
-print(f"MAIL_SERVER: {app.config['MAIL_SERVER']}")
-print(f"MAIL_PORT: {app.config['MAIL_PORT']}")
-print(f"MAIL_USERNAME: {app.config['MAIL_USERNAME']}")
-print(f"MAIL_PASSWORD: {app.config['MAIL_PASSWORD']}")
-print(f"MAIL_USE_TLS: {app.config['MAIL_USE_TLS']}")
-print(f"MAIL_USE_SSL: {app.config['MAIL_USE_SSL']}")
+# print("------------------------------------")
+# print(f"MAIL_SERVER: {app.config['MAIL_SERVER']}")
+# # print(f"MAIL_PORT: {app.config['MAIL_PORT']}")
+# print(f"MAIL_USERNAME: {app.config['MAIL_USERNAME']}")
+# print(f"MAIL_PASSWORD: {app.config['MAIL_PASSWORD']}")
+# print(f"MAIL_USE_TLS: {app.config['MAIL_USE_TLS']}")
+# print(f"MAIL_USE_SSL: {app.config['MAIL_USE_SSL']}")
 
 @app.errorhandler(Exception)
 def hande_error(e: Exception):

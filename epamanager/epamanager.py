@@ -8,36 +8,11 @@ or (at your option) any later version.
 
 import json
 import utils
-from .epamanager_utils import manage_response
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request
 from flask_jwt_extended import jwt_required
 
 epamanager_bp = Blueprint('epamanager', __name__)
-
-@epamanager_bp.route('/dialog', methods=['GET'])
-@jwt_required()
-def dialog():
-    """Open Epa Results Management
-
-    Returns dialog of the epa results management.
-    """
-    # open dialog
-    utils.get_config()
-    log = utils.create_log(__name__)
-
-    # args
-    args = request.get_json(force=True) if request.is_json else request.args
-    theme = args.get("theme")
-
-    # db fct
-    form = '"formName":"generic", "formType":"epa_manager"'
-    body = utils.create_body(theme, form=form)
-
-    result = utils.execute_procedure(log, theme, 'gw_fct_get_dialog', body, needs_write=True)
-    utils.remove_handlers(log)
-    return manage_response(result, log, theme)
-
 
 @epamanager_bp.route('/delete', methods=['DELETE'])
 @jwt_required()
