@@ -15,6 +15,14 @@ from sqlalchemy import text
 from qwc_services_core.auth import get_identity, get_username
 from dataclasses import dataclass
 
+TABNAME_MAP = {
+    "tab_network": ("N", "network_id"),
+    "tab_municipality": ("M", "muni_id"),
+    "tab_exploitation": ("E", "expl_id"),
+    "tab_exploitation_add": ("E", "expl_id"),
+    "tab_sector": ("S", "sector_id"),
+    "tab_network_state": ("T", "id")
+}
 
 def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
     theme_cfg = config.get("themes").get(theme)
@@ -24,35 +32,19 @@ def make_response(db_result: dict, theme: str, config: RuntimeConfig, log):
         layersVisibility = {}
 
         db = utils.get_db(theme, needs_write=False)
-        db_schema = utils.get_schema_from_theme(theme, config)
         tilecluster_table = tiling_cfg.get("tilecluster_table")
 
+        active = { "N": [], "M": [], "E": [], "S": [], "T": [] }
+        for tab in db_result["body"]["form"]["formTabs"]:
+            if data := TABNAME_MAP.get(tab["tabName"]):
+                id, id_name = data
+                for item in tab["fields"]:
+                    if item["value"] == True:
+                        active[id].append(item[id_name])
+
+        print(active)
+
         with db.connect() as conn:
-            identity = get_username(get_identity())
-            active = conn.execute(text(f"""
-                SET ROLE {identity};
-                SELECT * FROM  (SELECT 0 AS id, array_agg(network_id) AS networks FROM {db_schema}.selector_network WHERE cur_user = current_user) n
-                NATURAL JOIN (SELECT 0 AS id, array_agg(muni_id) AS munis FROM {db_schema}.selector_municipality WHERE cur_user = current_user) m
-                NATURAL JOIN (SELECT 0 AS id, array_agg(expl_id) AS expls FROM {db_schema}.selector_expl WHERE cur_user = current_user) e
-                NATURAL JOIN  (SELECT 0 AS id, array_agg(sector_id) AS sectors FROM {db_schema}.selector_sector WHERE cur_user = current_user) s
-                NATURAL JOIN  (SELECT 0 AS id, array_agg(state_id) AS states FROM {db_schema}.selector_state WHERE cur_user = current_user) st;
-            """)).fetchone()
-
-            print(active)
-
-            if active is None:
-                print("WARNING: selectors returned None!")
-                active = { "N": [], "M": [], "E": [], "S": [], "T": [] }
-            else:
-                # Ensure all lists are initialized, even if they're None from the database
-                active = {
-                    "N": active[1] if active[1] is not None else [],
-                    "M": active[2] if active[2] is not None else [],
-                    "E": active[3] if active[3] is not None else [],
-                    "S": active[4] if active[4] is not None else [],
-                    "T": active[5] if active[5] is not None else [],
-                }
-
             data = conn.execute(text(f"SELECT tilecluster_id FROM {tilecluster_table}")).fetchall()
 
         layersVisibility = {}
